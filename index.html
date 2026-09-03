@@ -129,7 +129,7 @@
 
 <div class="card card-portal">
   
-  <!-- Banner Header Dinamis (Tanpa Shield Icon) -->
+  <!-- Banner Header Dinamis -->
   <div class="banner-wrapper">
     <div class="banner-container">
       <img id="bannerImg" class="banner-img d-none" alt="Banner Ujian">
@@ -185,14 +185,14 @@
       </button>
     </div>
 
-    <!-- TAHAP 2: Pengisian Identitas Siswa -->
+    <!-- TAHAP 2: Pengisian Identitas & Pemilihan Ujian -->
     <form id="sectionIdentity" class="d-none" onsubmit="event.preventDefault(); persiapkanMulaiUjian();">
       <div class="border rounded-3 p-3 bg-light mb-3">
         <div class="d-flex justify-content-between align-items-center mb-1">
           <span class="step-tag">Tahap 2 dari 2</span>
           <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Token Terverifikasi</span>
         </div>
-        <h6 class="fw-bold text-navy mb-0">Pilih Identitas Peserta</h6>
+        <h6 class="fw-bold text-navy mb-0">Identitas & Pemilihan Soal</h6>
       </div>
 
       <!-- 1. Dropdown Ruang -->
@@ -216,13 +216,26 @@
       </div>
 
       <!-- 3. Dropdown Nama Siswa -->
-      <div class="mb-4">
+      <div class="mb-3">
         <label for="selectNama" class="form-label fw-semibold text-navy small">
           <i class="bi bi-person-fill me-1"></i> 3. Nama Lengkap Siswa
         </label>
         <select id="selectNama" class="form-select" disabled required>
           <option value="">Pilih kelas terlebih dahulu</option>
         </select>
+      </div>
+
+      <!-- 4. Dropdown Mata Pelajaran / Ujian Aktif -->
+      <div class="mb-4">
+        <label for="selectUjian" class="form-label fw-semibold text-navy small">
+          <i class="bi bi-journal-bookmark-fill me-1"></i> 4. Mata Pelajaran / Ujian Aktif
+        </label>
+        <select id="selectUjian" class="form-select" disabled required>
+          <option value="">Pilih kelas terlebih dahulu</option>
+        </select>
+        <div id="ujianHelpText" class="form-text small text-muted d-none">
+          Memuat daftar ujian yang sedang dibuka untuk kelas Anda.
+        </div>
       </div>
 
       <button type="submit" id="btnSubmitMulai" class="btn btn-navy w-100 d-flex align-items-center justify-content-center gap-2">
@@ -243,6 +256,7 @@
   let configData = {};
   let ujianAktifList = [];
   let masterSiswaList = [];
+  let currentAvailableUjian = [];
 
   window.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -252,8 +266,8 @@
       if (res.status !== "success") throw new Error(res.message);
 
       configData = res.config;
-      ujianAktifList = res.ujianAktif;
-      masterSiswaList = res.siswa;
+      ujianAktifList = res.ujianAktif || [];
+      masterSiswaList = res.siswa || [];
 
       applyVisualAssets();
 
@@ -272,7 +286,7 @@
     } catch (err) {
       console.error("Gagal inisialisasi:", err);
       document.getElementById("sectionLoading").innerHTML = 
-        `<div class="alert alert-danger small py-2 mb-0">Gagal terhubung ke database. Pastikan URL Apps Script sudah benar dan hak akses publik aktif.</div>`;
+        `<div class="alert alert-danger small py-2 mb-0">Gagal terhubung ke database. Pastikan URL Apps Script sudah benar dan izin akses publik (Anyone) aktif.</div>`;
     }
   });
 
@@ -299,7 +313,7 @@
       errorBox.classList.add("d-none");
       document.getElementById("sectionTokenGate").classList.add("d-none");
       document.getElementById("sectionIdentity").classList.remove("d-none");
-      document.getElementById("portalSubtitle").innerText = "Lengkapi identitas diri Anda.";
+      document.getElementById("portalSubtitle").innerText = "Lengkapi identitas dan pilih ujian.";
       populateDropdownRuang();
     } else {
       errorBox.classList.remove("d-none");
@@ -323,10 +337,15 @@
     const selectedRuang = document.getElementById("selectRuang").value;
     const selectKelas = document.getElementById("selectKelas");
     const selectNama = document.getElementById("selectNama");
+    const selectUjian = document.getElementById("selectUjian");
+    const ujianHelpText = document.getElementById("ujianHelpText");
 
     selectKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
     selectNama.innerHTML = '<option value="">Pilih kelas terlebih dahulu</option>';
+    selectUjian.innerHTML = '<option value="">Pilih kelas terlebih dahulu</option>';
     selectNama.disabled = true;
+    selectUjian.disabled = true;
+    ujianHelpText.classList.add("d-none");
 
     if (!selectedRuang) {
       selectKelas.disabled = true;
@@ -351,14 +370,20 @@
     const selectedRuang = document.getElementById("selectRuang").value;
     const selectedKelas = document.getElementById("selectKelas").value;
     const selectNama = document.getElementById("selectNama");
+    const selectUjian = document.getElementById("selectUjian");
+    const ujianHelpText = document.getElementById("ujianHelpText");
 
     selectNama.innerHTML = '<option value="">-- Pilih Nama Lengkap --</option>';
+    selectUjian.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
 
     if (!selectedKelas) {
       selectNama.disabled = true;
+      selectUjian.disabled = true;
+      ujianHelpText.classList.add("d-none");
       return;
     }
 
+    // 1. Populasi Nama Siswa
     const availableSiswa = masterSiswaList
       .filter(s => s.ruang === selectedRuang && s.kelas === selectedKelas)
       .sort((a, b) => a.nama.localeCompare(b.nama));
@@ -370,11 +395,40 @@
       opt.textContent = s.nama;
       selectNama.appendChild(opt);
     });
-
     selectNama.disabled = false;
+
+    // 2. Populasi Dropdown Ujian dari data UJIAN yang is_active = TRUE
+    const tingkatSiswa = extractTingkat(selectedKelas);
+    currentAvailableUjian = ujianAktifList.filter(u => {
+      if (!u.tingkatKelas || u.tingkatKelas.toUpperCase() === "SEMUA") return true;
+      const tingkatExam = extractTingkat(u.tingkatKelas);
+      return tingkatExam === tingkatSiswa || u.tingkatKelas.toUpperCase() === selectedKelas.toUpperCase();
+    });
+
+    if (currentAvailableUjian.length === 0) {
+      selectUjian.innerHTML = '<option value="">(Belum ada ujian aktif untuk kelas ini)</option>';
+      selectUjian.disabled = true;
+      ujianHelpText.classList.add("d-none");
+    } else {
+      currentAvailableUjian.forEach((u, index) => {
+        const opt = document.createElement("option");
+        opt.value = index;
+        const ket = u.keterangan ? ` - ${u.keterangan}` : "";
+        opt.textContent = `${u.mapel}${ket}`;
+        selectUjian.appendChild(opt);
+      });
+      selectUjian.disabled = false;
+      ujianHelpText.classList.remove("d-none");
+
+      // Jika hanya ada 1 ujian yang aktif, langsung terpilih otomatis
+      if (currentAvailableUjian.length === 1) {
+        selectUjian.value = "0";
+      }
+    }
   }
 
   function extractTingkat(kelasStr) {
+    if (!kelasStr) return "";
     const match = kelasStr.match(/\d+/);
     return match ? match[0] : kelasStr.trim();
   }
@@ -385,25 +439,33 @@
     const selectNama = document.getElementById("selectNama");
     const nama = selectNama.value;
     const nis = selectNama.selectedOptions[0]?.dataset.nis || "";
+    const selectUjian = document.getElementById("selectUjian");
+    const ujianIndex = selectUjian.value;
 
-    if (!ruang || !kelas || !nama) return;
-
-    const tingkatSiswa = extractTingkat(kelas);
-    const ujianCocok = ujianAktifList.find(u => {
-      return extractTingkat(u.tingkatKelas) === tingkatSiswa || u.tingkatKelas.toUpperCase() === kelas.toUpperCase();
-    });
-
-    if (!ujianCocok) {
-      alert(`Mohon maaf, belum ada ujian aktif untuk tingkat kelas ${kelas}. Silakan hubungi pengawas.`);
+    if (!ruang || !kelas || !nama) {
+      alert("Harap lengkapi identitas diri terlebih dahulu!");
       return;
     }
 
+    if (ujianIndex === "" || !currentAvailableUjian[ujianIndex]) {
+      alert("Silakan pilih mata pelajaran / ujian yang akan dikerjakan!");
+      return;
+    }
+
+    const ujianTerpilih = currentAvailableUjian[ujianIndex];
+
+    if (!ujianTerpilih.linkForm) {
+      alert("Tautan soal Google Form untuk mata pelajaran ini belum diatur di tab UJIAN. Hubungi pengawas.");
+      return;
+    }
+
+    // Simpan semua konfigurasi sesi yang dipilih ke sessionStorage
     sessionStorage.setItem("exam_ruang", ruang);
     sessionStorage.setItem("exam_kelas", kelas);
     sessionStorage.setItem("exam_nama", nama);
     sessionStorage.setItem("exam_nis", nis);
-    sessionStorage.setItem("exam_mapel", ujianCocok.mapel);
-    sessionStorage.setItem("exam_link_form", ujianCocok.linkForm);
+    sessionStorage.setItem("exam_mapel", ujianTerpilih.mapel);
+    sessionStorage.setItem("exam_link_form", ujianTerpilih.linkForm);
     sessionStorage.setItem("exam_token", configData.tokenUjian);
     sessionStorage.setItem("exam_token_reset", configData.tokenResetPengawas);
     sessionStorage.setItem("exam_max_violation", configData.batasPelanggaran);
@@ -411,6 +473,7 @@
     sessionStorage.setItem("exam_is_locked", "false");
     sessionStorage.removeItem("exam_started");
 
+    // Lanjut ke halaman pengerjaan soal
     window.location.href = "exam.html";
   }
 </script>
