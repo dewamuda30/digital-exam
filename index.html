@@ -397,7 +397,7 @@
     });
     selectNama.disabled = false;
 
-    // 2. Populasi Dropdown Ujian dari data UJIAN yang is_active = TRUE
+    // 2. Populasi Dropdown Ujian (Hanya Mapel & Kelas, tanpa jam/keterangan)
     const tingkatSiswa = extractTingkat(selectedKelas);
     currentAvailableUjian = ujianAktifList.filter(u => {
       if (!u.tingkatKelas || u.tingkatKelas.toUpperCase() === "SEMUA") return true;
@@ -413,14 +413,21 @@
       currentAvailableUjian.forEach((u, index) => {
         const opt = document.createElement("option");
         opt.value = index;
-        const ket = u.keterangan ? ` - ${u.keterangan}` : "";
-        opt.textContent = `${u.mapel}${ket}`;
+
+        // Format Label: Mapel (Kelas X)
+        let labelKelas = "";
+        if (u.tingkatKelas) {
+          const rawTingkat = u.tingkatKelas.toString().trim().replace(/^kelas\s*/i, "");
+          labelKelas = rawTingkat.toUpperCase() === "SEMUA" ? " (Semua Kelas)" : ` (Kelas ${rawTingkat})`;
+        }
+
+        opt.textContent = `${u.mapel}${labelKelas}`;
         selectUjian.appendChild(opt);
       });
       selectUjian.disabled = false;
       ujianHelpText.classList.remove("d-none");
 
-      // Jika hanya ada 1 ujian yang aktif, langsung terpilih otomatis
+      // Otomatis terpilih jika hanya ada 1 pilihan
       if (currentAvailableUjian.length === 1) {
         selectUjian.value = "0";
       }
@@ -459,7 +466,6 @@
       return;
     }
 
-    // Simpan semua konfigurasi sesi yang dipilih ke sessionStorage
     sessionStorage.setItem("exam_ruang", ruang);
     sessionStorage.setItem("exam_kelas", kelas);
     sessionStorage.setItem("exam_nama", nama);
@@ -473,7 +479,6 @@
     sessionStorage.setItem("exam_is_locked", "false");
     sessionStorage.removeItem("exam_started");
 
-    // Lanjut ke halaman pengerjaan soal
     window.location.href = "exam.html";
   }
 </script>
