@@ -47,7 +47,7 @@
 
     .banner-container {
       width: 100%;
-      height: 140px;
+      height: 130px;
       background-color: var(--primary-navy);
       display: flex;
       align-items: center;
@@ -63,14 +63,14 @@
     }
 
     .logo-badge {
-      width: 82px;
-      height: 82px;
+      width: 84px;
+      height: 84px;
       border-radius: 50%;
       background: var(--white);
       border: 4px solid var(--white);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
       position: absolute;
-      bottom: -41px;
+      bottom: -42px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -129,13 +129,10 @@
 
 <div class="card card-portal">
   
-  <!-- Banner Header Dinamis -->
+  <!-- Banner Header Dinamis (Tanpa Shield Icon) -->
   <div class="banner-wrapper">
     <div class="banner-container">
       <img id="bannerImg" class="banner-img d-none" alt="Banner Ujian">
-      <div id="bannerPlaceholder" class="text-white text-center p-3">
-        
-      </div>
     </div>
     
     <!-- Logo Badge Tampil Penuh -->
@@ -183,7 +180,7 @@
       </div>
 
       <button type="button" onclick="verifikasiTokenAwal()" class="btn btn-navy w-100 d-flex align-items-center justify-content-center gap-2">
-        <span>Selanjutnya</span>
+        <span>Buka Akses Identitas</span>
         <i class="bi bi-unlock-fill"></i>
       </button>
     </div>
@@ -229,7 +226,7 @@
       </div>
 
       <button type="submit" id="btnSubmitMulai" class="btn btn-navy w-100 d-flex align-items-center justify-content-center gap-2">
-        <span>Mulai Ujian</span>
+        <span>Masuk Layar Penuh & Mulai Ujian</span>
         <i class="bi bi-arrows-fullscreen"></i>
       </button>
     </form>
@@ -289,7 +286,6 @@
       bannerImg.src = configData.bannerUjian;
       bannerImg.onload = () => {
         bannerImg.classList.remove("d-none");
-        document.getElementById("bannerPlaceholder").classList.add("d-none");
       };
     }
   }
