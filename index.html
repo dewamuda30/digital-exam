@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Asesmen Digital</title>
+  <link id="appFavicon" rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+
+  <!-- Bootstrap 5.3 & Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    :root {
+      --primary-navy: #0d1b2a;
+      --navy-surface: #1b263b;
+      --navy-accent: #415a77;
+      --bg-slate: #f8fafc;
+      --white: #ffffff;
+      --border-color: #e2e8f0;
+    }
+
+    body {
+      background-color: var(--bg-slate);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #334155;
+    }
+
+    .card-portal {
+      width: 100%;
+      max-width: 480px;
+      background-color: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 1.25rem;
+      box-shadow: 0 20px 40px -15px rgba(13, 27, 42, 0.15), 0 0 15px rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .banner-container {
+      width: 100%;
+      height: 150px;
+      background-color: var(--primary-navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .banner-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .logo-badge {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 3px solid var(--white);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      position: absolute;
+      bottom: -34px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .logo-badge img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .text-navy {
+      color: var(--primary-navy) !important;
+    }
+
+    .btn-navy {
+      background-color: var(--primary-navy);
+      color: var(--white);
+      font-weight: 600;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.65rem;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn-navy:hover:not(:disabled) {
+      background-color: var(--navy-surface);
+      color: var(--white);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(13, 27, 42, 0.2);
+    }
+
+    .btn-navy:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--navy-accent);
+      box-shadow: 0 0 0 0.25rem rgba(13, 27, 42, 0.12);
+    }
+
+    .step-tag {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      color: var(--navy-accent);
+    }
+  </style>
+</head>
+<body class="p-3 p-md-4">
+
+<div class="card card-portal">
+  
+  <!-- Banner Header Dinamis -->
+  <div class="banner-container" id="bannerWrapper">
+    <img id="bannerImg" class="banner-img d-none" alt="Banner Ujian">
+    <div id="bannerPlaceholder" class="text-white text-center p-3">
+      <i class="bi bi-shield-shaded fs-1 opacity-50"></i>
+    </div>
+    
+    <!-- Logo Instansi Melayang -->
+    <div class="logo-badge">
+      <img id="logoImg" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>" alt="Logo">
+    </div>
+  </div>
+
+  <div class="card-body p-4 p-md-5 pt-5">
+    
+    <!-- Identitas Portal -->
+    <div class="text-center mt-3 mb-4">
+      <h4 class="fw-bold text-navy mb-1" id="portalTitle">DIGITAL EXAM PORTAL</h4>
+      <p class="text-muted small mb-0" id="portalSubtitle">Memverifikasi kesiapan sistem...</p>
+    </div>
+
+    <!-- Spinner Memuat Konfigurasi -->
+    <div id="sectionLoading" class="text-center py-4">
+      <div class="spinner-border text-navy mb-2" role="status"></div>
+      <p class="small text-muted mb-0">Menghubungkan ke pusat server ujian...</p>
+    </div>
+
+    <!-- Peringatan Portal Ditutup -->
+    <div id="sectionClosed" class="alert alert-warning text-center small fw-semibold d-none border-warning-subtle py-3" role="alert">
+      <i class="bi bi-exclamation-octagon-fill d-block fs-3 mb-2 text-warning"></i>
+      <span id="txtClosedMsg">Ujian belum dibuka oleh panitia.</span>
+    </div>
+
+    <!-- TAHAP 1: Validasi Masuk (Token Ujian) -->
+    <div id="sectionTokenGate" class="d-none">
+      <div class="border rounded-3 p-3 bg-light mb-3 text-center">
+        <span class="step-tag d-block mb-1">Tahap 1 dari 2</span>
+        <h6 class="fw-bold text-navy mb-0">Masukkan Token Ujian</h6>
+        <p class="text-muted small mb-0">Mintalah token sesi kepada pengawas yang bertugas.</p>
+      </div>
+
+      <div class="mb-3">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-navy"><i class="bi bi-key-fill"></i></span>
+          <input type="text" id="inputTokenAwal" class="form-control border-start-0 text-uppercase fw-bold text-center letter-spacing-1" placeholder="TOKEN SESI" autocomplete="off">
+        </div>
+        <div id="tokenErrorMsg" class="text-danger small fw-semibold mt-1 d-none text-center">
+          <i class="bi bi-x-circle me-1"></i>Token salah atau tidak sesuai!
+        </div>
+      </div>
+
+      <button type="button" onclick="verifikasiTokenAwal()" class="btn btn-navy w-100 d-flex align-items-center justify-content-center gap-2">
+        <span>Buka Akses Identitas</span>
+        <i class="bi bi-unlock-fill"></i>
+      </button>
+    </div>
+
+    <!-- TAHAP 2: Pengisian Identitas Siswa -->
+    <form id="sectionIdentity" class="d-none" onsubmit="event.preventDefault(); persiapkanMulaiUjian();">
+      <div class="border rounded-3 p-3 bg-light mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="step-tag">Tahap 2 dari 2</span>
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Token Terverifikasi</span>
+        </div>
+        <h6 class="fw-bold text-navy mb-0">Pilih Identitas Peserta</h6>
+      </div>
+
+      <!-- 1. Dropdown Ruang -->
+      <div class="mb-3">
+        <label for="selectRuang" class="form-label fw-semibold text-navy small">
+          <i class="bi bi-geo-alt-fill me-1"></i> 1. Ruang Ujian
+        </label>
+        <select id="selectRuang" class="form-select" onchange="onRuangSelected()" required>
+          <option value="">-- Pilih Ruang --</option>
+        </select>
+      </div>
+
+      <!-- 2. Dropdown Kelas -->
+      <div class="mb-3">
+        <label for="selectKelas" class="form-label fw-semibold text-navy small">
+          <i class="bi bi-diagram-3-fill me-1"></i> 2. Kelas
+        </label>
+        <select id="selectKelas" class="form-select" onchange="onKelasSelected()" disabled required>
+          <option value="">Pilih ruang terlebih dahulu</option>
+        </select>
+      </div>
+
+      <!-- 3. Dropdown Nama Siswa -->
+      <div class="mb-4">
+        <label for="selectNama" class="form-label fw-semibold text-navy small">
+          <i class="bi bi-person-fill me-1"></i> 3. Nama Lengkap Siswa
+        </label>
+        <select id="selectNama" class="form-select" disabled required>
+          <option value="">Pilih kelas terlebih dahulu</option>
+        </select>
+      </div>
+
+      <button type="submit" id="btnSubmitMulai" class="btn btn-navy w-100 d-flex align-items-center justify-content-center gap-2">
+        <span>Masuk Layar Penuh & Mulai Ujian</span>
+        <i class="bi bi-arrows-fullscreen"></i>
+      </button>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  // ==========================================================
+  // TEMPELKAN WEB APP URL DARI DEPLOYMENT APPS SCRIPT DI SINI:
+  // ==========================================================
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwI7X-Q557b7w2bL7D2q047n5X2w6h1pXyZ0k_contoh/exec";
+
+  let configData = {};
+  let ujianAktifList = [];
+  let masterSiswaList = [];
+
+  window.addEventListener("DOMContentLoaded", async () => {
+    try {
+      const response = await fetch(SCRIPT_URL);
+      const res = await response.json();
+
+      if (res.status !== "success") throw new Error(res.message);
+
+      configData = res.config;
+      ujianAktifList = res.ujianAktif;
+      masterSiswaList = res.siswa;
+
+      applyVisualAssets();
+
+      document.getElementById("sectionLoading").classList.add("d-none");
+
+      // Cek Status Sakelar PORTAL_AKTIF dari Tab CONFIG
+      if (!configData.portalAktif) {
+        document.getElementById("txtClosedMsg").innerText = configData.pesanTutup || "Ujian sedang ditutup.";
+        document.getElementById("sectionClosed").classList.remove("d-none");
+        document.getElementById("portalSubtitle").innerText = "Akses Ditutup";
+        return;
+      }
+
+      document.getElementById("portalSubtitle").innerText = "Silakan masukkan token sesi untuk memulai.";
+      document.getElementById("sectionTokenGate").classList.remove("d-none");
+
+    } catch (err) {
+      console.error("Gagal inisialisasi:", err);
+      document.getElementById("sectionLoading").innerHTML = 
+        `<div class="alert alert-danger small py-2 mb-0">Gagal terhubung ke database. Pastikan URL Apps Script sudah benar dan hak akses publik aktif.</div>`;
+    }
+  });
+
+  // Pasang Favicon, Banner, dan Logo dari Google Drive
+  function applyVisualAssets() {
+    if (configData.logoInstansi) {
+      document.getElementById("appFavicon").href = configData.logoInstansi;
+      document.getElementById("logoImg").src = configData.logoInstansi;
+    }
+    if (configData.bannerUjian) {
+      const bannerImg = document.getElementById("bannerImg");
+      bannerImg.src = configData.bannerUjian;
+      bannerImg.onload = () => {
+        bannerImg.classList.remove("d-none");
+        document.getElementById("bannerPlaceholder").classList.add("d-none");
+      };
+    }
+  }
+
+  // Verifikasi Token Gerbang Awal
+  function verifikasiTokenAwal() {
+    const inputToken = document.getElementById("inputTokenAwal").value.trim().toUpperCase();
+    const tokenAsli = (configData.tokenUjian || "").trim().toUpperCase();
+    const errorBox = document.getElementById("tokenErrorMsg");
+
+    if (inputToken === tokenAsli && tokenAsli !== "") {
+      errorBox.classList.add("d-none");
+      document.getElementById("sectionTokenGate").classList.add("d-none");
+      document.getElementById("sectionIdentity").classList.remove("d-none");
+      document.getElementById("portalSubtitle").innerText = "Lengkapi identitas diri Anda.";
+      populateDropdownRuang();
+    } else {
+      errorBox.classList.remove("d-none");
+    }
+  }
+
+  // Populate Pilihan Ruang (Unik & Urut)
+  function populateDropdownRuang() {
+    const selectRuang = document.getElementById("selectRuang");
+    const uniqueRuang = [...new Set(masterSiswaList.map(s => s.ruang))].sort();
+
+    selectRuang.innerHTML = '<option value="">-- Pilih Ruang --</option>';
+    uniqueRuang.forEach(ruang => {
+      const opt = document.createElement("option");
+      opt.value = ruang;
+      opt.textContent = ruang;
+      selectRuang.appendChild(opt);
+    });
+  }
+
+  // Event: Ruang Dipilih -> Filter Kelas
+  function onRuangSelected() {
+    const selectedRuang = document.getElementById("selectRuang").value;
+    const selectKelas = document.getElementById("selectKelas");
+    const selectNama = document.getElementById("selectNama");
+
+    selectKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+    selectNama.innerHTML = '<option value="">Pilih kelas terlebih dahulu</option>';
+    selectNama.disabled = true;
+
+    if (!selectedRuang) {
+      selectKelas.disabled = true;
+      return;
+    }
+
+    const availableKelas = [...new Set(
+      masterSiswaList.filter(s => s.ruang === selectedRuang).map(s => s.kelas)
+    )].sort();
+
+    availableKelas.forEach(kelas => {
+      const opt = document.createElement("option");
+      opt.value = kelas;
+      opt.textContent = kelas;
+      selectKelas.appendChild(opt);
+    });
+
+    selectKelas.disabled = false;
+  }
+
+  // Event: Kelas Dipilih -> Filter Nama Siswa
+  function onKelasSelected() {
+    const selectedRuang = document.getElementById("selectRuang").value;
+    const selectedKelas = document.getElementById("selectKelas").value;
+    const selectNama = document.getElementById("selectNama");
+
+    selectNama.innerHTML = '<option value="">-- Pilih Nama Lengkap --</option>';
+
+    if (!selectedKelas) {
+      selectNama.disabled = true;
+      return;
+    }
+
+    const availableSiswa = masterSiswaList
+      .filter(s => s.ruang === selectedRuang && s.kelas === selectedKelas)
+      .sort((a, b) => a.nama.localeCompare(b.nama));
+
+    availableSiswa.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.nama;
+      opt.dataset.nis = s.nis || "";
+      opt.textContent = s.nama;
+      selectNama.appendChild(opt);
+    });
+
+    selectNama.disabled = false;
+  }
+
+  // Ekstraksi Angka Tingkat Kelas (misal "9A" -> "9", "Kelas 8" -> "8")
+  function extractTingkat(kelasStr) {
+    const match = kelasStr.match(/\d+/);
+    return match ? match[0] : kelasStr.trim();
+  }
+
+  // Persiapan Pindah ke Ruang Ujian
+  function persiapkanMulaiUjian() {
+    const ruang = document.getElementById("selectRuang").value;
+    const kelas = document.getElementById("selectKelas").value;
+    const selectNama = document.getElementById("selectNama");
+    const nama = selectNama.value;
+    const nis = selectNama.selectedOptions[0]?.dataset.nis || "";
+
+    if (!ruang || !kelas || !nama) return;
+
+    // Pencocokan Tingkat Kelas Siswa dengan Soal Ujian Aktif di Tab UJIAN
+    const tingkatSiswa = extractTingkat(kelas);
+    const ujianCocok = ujianAktifList.find(u => {
+      return extractTingkat(u.tingkatKelas) === tingkatSiswa || u.tingkatKelas.toUpperCase() === kelas.toUpperCase();
+    });
+
+    if (!ujianCocok) {
+      alert(`Mohon maaf, belum ada ujian aktif untuk tingkat kelas ${kelas}. Silakan tanyakan kepada pengawas ruang.`);
+      return;
+    }
+
+    // Simpan Parameter Sesi Lengkap ke sessionStorage
+    sessionStorage.setItem("exam_ruang", ruang);
+    sessionStorage.setItem("exam_kelas", kelas);
+    sessionStorage.setItem("exam_nama", nama);
+    sessionStorage.setItem("exam_nis", nis);
+    sessionStorage.setItem("exam_mapel", ujianCocok.mapel);
+    sessionStorage.setItem("exam_link_form", ujianCocok.linkForm);
+    sessionStorage.setItem("exam_token", configData.tokenUjian);
+    sessionStorage.setItem("exam_token_reset", configData.tokenResetPengawas);
+    sessionStorage.setItem("exam_max_violation", configData.batasPelanggaran);
+    sessionStorage.setItem("exam_pelanggaran", "0");
+    sessionStorage.setItem("exam_is_locked", "false");
+    sessionStorage.removeItem("exam_started");
+
+    // Langsung arahkan ke exam.html
+    window.location.href = "exam.html";
+  }
+</script>
+
+</body>
+</html>
