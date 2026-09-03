@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Mencegah zoom paksa pada perangkat mobile saat input disentuh -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Ruang Ujian - Digital Exam Portal</title>
 
   <!-- Bootstrap 5.3 & Bootstrap Icons -->
@@ -21,69 +22,103 @@
     }
 
     * {
+      box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* Menggunakan dvh (dynamic viewport height) agar klop di browser mobile */
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: var(--bg-slate);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     }
 
     body {
-      background-color: var(--bg-slate);
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
+    /* NAVBAR RESPONSIF */
     .navbar-exam {
       background-color: var(--primary-navy);
       color: var(--white);
-      padding: 10px 20px;
+      padding: 8px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid var(--navy-accent);
       flex-shrink: 0;
       z-index: 100;
+      min-height: 52px;
     }
 
+    .badge-mapel {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-weight: 600;
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+      vertical-align: middle;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+
+    @media (min-width: 768px) {
+      .navbar-exam {
+        padding: 10px 20px;
+        min-height: 60px;
+      }
+      .badge-mapel {
+        max-width: 320px;
+        font-size: 0.9rem;
+        padding: 6px 12px;
+      }
+    }
+
+    /* KONTAINER SOAL (IFRAME) */
     .frame-wrapper {
-      flex-grow: 1;
-      position: relative;
+      flex: 1 1 0%;
+      min-height: 0;
       width: 100%;
-      height: calc(100vh - 65px);
+      position: relative;
       background-color: #f1f5f9;
+      -webkit-overflow-scrolling: touch;
     }
 
     iframe {
       width: 100%;
       height: 100%;
+      border: 0;
+      display: block;
+      background-color: var(--white);
+    }
+
+    /* TOMBOL AKSI */
+    .btn-finish {
+      background-color: #059669;
+      color: var(--white);
+      font-weight: 600;
+      font-size: 0.8rem;
       border: none;
-      background: var(--white);
+      padding: 6px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      transition: background 0.2s;
     }
 
-    /* OVERLAY PENGUNCI LAYAR */
-    .lock-overlay {
-      position: fixed;
-      inset: 0;
-      background-color: rgba(13, 27, 42, 0.95);
-      backdrop-filter: blur(8px);
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .lock-card {
-      width: 100%;
-      max-width: 440px;
-      background: var(--white);
-      border-radius: 1.25rem;
-      padding: 30px;
-      text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    .btn-finish:hover, .btn-finish:active {
+      background-color: #047857;
+      color: var(--white);
     }
 
     .btn-navy {
@@ -96,106 +131,136 @@
       transition: all 0.2s;
     }
 
-    .btn-navy:hover {
+    .btn-navy:hover, .btn-navy:active {
       background-color: var(--navy-surface);
       color: var(--white);
     }
 
-    .btn-finish {
-      background-color: #059669;
-      color: var(--white);
-      font-weight: 600;
-      font-size: 0.85rem;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 6px;
+    /* OVERLAY PENGUNCI LAYAR PENUH (RAMAH MOBILE) */
+    .lock-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(13, 27, 42, 0.97);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-y: auto;
     }
 
-    .btn-finish:hover {
-      background-color: #047857;
-      color: var(--white);
+    .lock-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--white);
+      border-radius: 1.25rem;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      margin: auto;
+    }
+
+    @media (min-width: 768px) {
+      .lock-card {
+        padding: 32px 28px;
+      }
+    }
+
+    /* Font input minimal 16px mencegah iPhone Safari otomatis zoom-in */
+    .form-control-secure {
+      font-size: 16px !important;
+      letter-spacing: 0.05em;
     }
   </style>
 </head>
 <body oncontextmenu="return false;">
 
-  <!-- Header Navigasi Ruang Ujian -->
+  <!-- Header Navigasi Ujian -->
   <header class="navbar-exam shadow-sm">
-    <div class="d-flex align-items-center gap-3">
-      <span class="badge bg-light text-navy px-2 py-1 fw-bold fs-6">
-        <i class="bi bi-journal-text me-1"></i><span id="navMapel">-</span>
+    <div class="d-flex align-items-center gap-2 overflow-hidden">
+      <span class="badge-mapel" id="navMapel" title="Mata Pelajaran">
+        <i class="bi bi-journal-text me-1"></i><span id="navMapelText">Ujian</span>
       </span>
-      <div class="small d-none d-md-block text-light opacity-75">
+      
+      <!-- Keterangan ruang/nama disembunyikan di HP kecil agar tidak sesak -->
+      <div class="small d-none d-md-block text-light opacity-75 text-truncate" style="max-width: 250px;">
         <span id="navRuang">-</span> &bull; <span id="navKelas">-</span> &bull; <strong id="navNama" class="text-white">-</strong>
       </div>
     </div>
 
-    <div class="d-flex align-items-center gap-3">
-      <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 small">
-        <i class="bi bi-exclamation-triangle-fill me-1"></i>Pelanggaran: <strong id="navPelanggaran">0</strong>x
+    <div class="d-flex align-items-center gap-2">
+      <!-- Badge Pelanggaran Ringkas -->
+      <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 small d-flex align-items-center gap-1" style="font-size: 0.75rem;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span><strong id="navPelanggaran">0</strong>x</span>
       </span>
+
+      <!-- Tombol Selesai Ujian -->
       <button class="btn-finish d-flex align-items-center gap-1" onclick="bukaModalSelesai()">
-        <i class="bi bi-check2-circle fs-6"></i>
-        <span>Selesai Ujian</span>
+        <i class="bi bi-check2-circle"></i>
+        <span>Selesai</span>
       </button>
     </div>
   </header>
 
-  <!-- Kontainer Soal Google Form -->
+  <!-- Kontainer Iframe Google Form -->
   <main class="frame-wrapper" id="frameWrapper">
-    <iframe id="examIframe" src="about:blank">Memuat lembar ujian...</iframe>
+    <iframe id="examIframe" src="about:blank" allow="autoplay">Memuat lembar soal...</iframe>
   </main>
 
-  <!-- 1. OVERLAY INISIALISASI (Masuk Fullscreen Pertama Kali) -->
+  <!-- 1. OVERLAY INISIALISASI (Awal Masuk Layar Penuh) -->
   <div id="overlayInit" class="lock-overlay">
     <div class="lock-card">
       <div class="mb-3 text-navy">
-        <i class="bi bi-arrows-fullscreen display-4 text-primary"></i>
+        <i class="bi bi-arrows-fullscreen display-5 text-primary"></i>
       </div>
-      <h4 class="fw-bold text-navy mb-2">Masuk Ruang Ujian</h4>
+      <h5 class="fw-bold text-navy mb-2">Masuk Ruang Ujian</h5>
       <p class="text-muted small mb-4">
-        Sistem akan mengunci layar Anda ke mode Layar Penuh (Fullscreen). Pastikan Anda tidak keluar layar hingga ujian selesai.
+        Sistem akan mengunci layar ke mode Layar Penuh (*Fullscreen*). Pastikan Anda tidak keluar atau membuka aplikasi lain hingga ujian selesai.
       </p>
-      <button class="btn btn-navy w-100 py-2" onclick="masukFullscreenAwal()">
-        <i class="bi bi-fullscreen me-1"></i> Mulai Layar Penuh Sekarang
+      <button class="btn btn-navy w-100 py-2 d-flex align-items-center justify-content-center gap-2" onclick="masukFullscreenAwal()">
+        <i class="bi bi-fullscreen"></i>
+        <span>Mulai Sekarang</span>
       </button>
     </div>
   </div>
 
-  <!-- 2. OVERLAY INTERUPSI (Keluar Fullscreen < Batas Maksimal) -->
+  <!-- 2. OVERLAY INTERUPSI (Keluar Fullscreen / Pindah Tab < Batas) -->
   <div id="overlayInterupsi" class="lock-overlay d-none">
     <div class="lock-card">
-      <div class="mb-3">
-        <i class="bi bi-exclamation-octagon-fill display-4 text-danger"></i>
+      <div class="mb-2">
+        <i class="bi bi-exclamation-octagon-fill display-5 text-danger"></i>
       </div>
-      <h4 class="fw-bold text-danger mb-1">TERDETEKSI KELUAR!</h4>
+      <h5 class="fw-bold text-danger mb-1">TERDETEKSI KELUAR!</h5>
       <p class="text-muted small mb-3">
-        Anda terdeteksi meninggalkan layar penuh atau berpindah jendela. Pelanggaran telah dicatat oleh sistem guru.
+        Layar ujian tertutup karena Anda terdeteksi meninggalkan layar penuh atau berpindah aplikasi. Kejadian ini telah dicatat ke sistem.
       </p>
       <div class="mb-3">
         <label class="form-label small fw-semibold text-navy">Masukkan Token Ujian untuk Melanjutkan</label>
-        <input type="text" id="inputTokenPulih" class="form-control text-uppercase text-center fw-bold py-2" placeholder="TOKEN SESI" autocomplete="off">
+        <input type="text" id="inputTokenPulih" class="form-control form-control-secure text-uppercase text-center fw-bold py-2" placeholder="TOKEN SESI" autocomplete="off">
         <div id="errTokenPulih" class="text-danger small mt-1 d-none">Token salah!</div>
       </div>
       <button class="btn btn-navy w-100 py-2" onclick="pulihkanFullscreen()">
-        <i class="bi bi-arrows-fullscreen me-1"></i> Kembali ke Layar Penuh
+        <i class="bi bi-arrows-fullscreen me-1"></i> Kembali ke Ujian
       </button>
     </div>
   </div>
 
-  <!-- 3. OVERLAY KUNCI TOTAL (Pelanggaran >= Batas) -->
+  <!-- 3. OVERLAY KUNCI TOTAL (Pelanggaran >= Batas Toleransi) -->
   <div id="overlayBlokirTotal" class="lock-overlay d-none">
     <div class="lock-card border border-danger">
-      <div class="mb-3">
-        <i class="bi bi-shield-x display-3 text-danger"></i>
+      <div class="mb-2">
+        <i class="bi bi-shield-x display-4 text-danger"></i>
       </div>
-      <h4 class="fw-bold text-danger mb-1">AKSES UJIAN DIBLOKIR!</h4>
+      <h5 class="fw-bold text-danger mb-1">UJIAN DIBLOKIR!</h5>
       <p class="text-muted small mb-3">
-        Anda telah melampaui batas toleransi pelanggaran. Silakan panggil <strong>pengawas ruangan</strong> untuk membuka kunci ujian Anda.
+        Anda telah melampaui batas toleransi interupsi. Segera angkat tangan dan panggil <strong>pengawas ruang</strong>.
       </p>
       <div class="mb-3 text-start bg-light p-3 rounded-3 border">
-        <label class="form-label small fw-bold text-navy mb-1"><i class="bi bi-person-lock me-1"></i>Kunci Khusus Pengawas</label>
-        <input type="password" id="inputTokenGuru" class="form-control text-center fw-bold py-2" placeholder="Sandi Reset Pengawas" autocomplete="off">
+        <label class="form-label small fw-bold text-navy mb-1"><i class="bi bi-person-lock me-1"></i>Sandi Buka Pengawas</label>
+        <input type="password" id="inputTokenGuru" class="form-control form-control-secure text-center fw-bold py-2" placeholder="Sandi Reset Pengawas" autocomplete="off">
         <div id="errTokenGuru" class="text-danger small mt-1 d-none">Sandi reset salah!</div>
       </div>
       <button class="btn btn-danger w-100 py-2 fw-semibold" onclick="bukaKunciPengawas()">
@@ -206,22 +271,22 @@
 
   <!-- 4. MODAL KONFIRMASI SELESAI UJIAN -->
   <div class="modal fade" id="modalSelesai" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
       <div class="modal-content rounded-4 border-0 p-2">
         <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title fw-bold text-navy"><i class="bi bi-check-circle-fill text-success me-2"></i>Akhiri Sesi Ujian</h5>
+          <h6 class="modal-title fw-bold text-navy"><i class="bi bi-check-circle-fill text-success me-2"></i>Akhiri Ujian</h6>
         </div>
-        <div class="modal-body text-secondary small">
-          <p class="mb-2">Pastikan Anda sudah menekan tombol <strong>Kirim (Submit)</strong> di lembar soal Google Form sebelum mengakhiri sesi.</p>
-          <div class="mb-3 mt-3">
-            <label class="form-label fw-bold text-navy">Masukkan Token Ujian untuk Konfirmasi Keluar:</label>
-            <input type="text" id="inputTokenSelesai" class="form-control text-uppercase text-center fw-bold py-2" placeholder="TOKEN SESI" autocomplete="off">
+        <div class="modal-body text-secondary small py-2">
+          <p class="mb-2">Pastikan sudah menekan tombol <strong>KIRIM (SUBMIT)</strong> di dalam Google Form sebelum mengakhiri sesi.</p>
+          <div class="my-2">
+            <label class="form-label fw-bold text-navy small mb-1">Token Ujian Konfirmasi:</label>
+            <input type="text" id="inputTokenSelesai" class="form-control form-control-secure text-uppercase text-center fw-bold py-2" placeholder="TOKEN SESI" autocomplete="off">
             <div id="errTokenSelesai" class="text-danger small mt-1 d-none">Token tidak sesuai!</div>
           </div>
         </div>
-        <div class="modal-footer border-0 pt-0">
-          <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Batal</button>
-          <button type="button" class="btn btn-navy px-4" onclick="verifikasiSelesaiUjian()">Konfirmasi & Keluar</button>
+        <div class="modal-footer border-0 pt-0 d-flex gap-2">
+          <button type="button" class="btn btn-light flex-grow-1" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-navy flex-grow-1" onclick="verifikasiSelesaiUjian()">Selesai</button>
         </div>
       </div>
     </div>
@@ -234,7 +299,7 @@
     // ==========================================================
     // TEMPELKAN WEB APP URL DARI APPS SCRIPT DI SINI:
     // ==========================================================
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwI7X-Q557b7w2bL7D2q047n5X2w6h1pXyZ0k_contoh/exec";
+    const SCRIPT_URL = "URL_GOOGLE_APPS_SCRIPT_DEPLOYMENT_ANDA";
 
     // 1. Ambil Parameter Sesi Siswa
     const ruangSiswa = sessionStorage.getItem("exam_ruang");
@@ -247,9 +312,9 @@
     const maxPelanggaran = parseInt(sessionStorage.getItem("exam_max_violation") || "3", 10);
     let totalPelanggaran = parseInt(sessionStorage.getItem("exam_pelanggaran") || "0", 10);
 
-    // Proteksi Rute: Jika belum login, tendang balik ke index.html
+    // Proteksi Rute: Jika belum login, tendang kembali ke index.html
     if (!namaSiswa || !kelasSiswa || !linkForm) {
-      alert("Akses tidak sah. Silakan login terlebih dahulu!");
+      alert("Akses tidak sah. Silakan lengkapi login terlebih dahulu!");
       window.location.replace("index.html");
     }
 
@@ -261,7 +326,7 @@
     window.addEventListener("beforeunload", () => { isUnloading = true; });
 
     window.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("navMapel").innerText = mapelSiswa || "Ujian";
+      document.getElementById("navMapelText").innerText = mapelSiswa || "Ujian";
       document.getElementById("navRuang").innerText = ruangSiswa;
       document.getElementById("navKelas").innerText = kelasSiswa;
       document.getElementById("navNama").innerText = namaSiswa;
@@ -269,56 +334,80 @@
       document.getElementById("examIframe").src = linkForm;
       modalSelesaiInstance = new bootstrap.Modal(document.getElementById("modalSelesai"));
 
-      // Cek apakah siswa sebelumnya sudah dalam status terblokir
       if (sessionStorage.getItem("exam_is_locked") === "true") {
         kunciLayarTotal();
       }
     });
 
-    // Memicu Fullscreen Awal
-    function masukFullscreenAwal() {
+    // Helper: Eksekusi Request Fullscreen dengan Kompatibilitas iOS Safari
+    function jalankanFullscreen(suksesCallback) {
       const el = document.documentElement;
-      const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-      
+      const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+
       if (requestFS) {
         requestFS.call(el).then(() => {
-          document.getElementById("overlayInit").classList.add("d-none");
-          if (!sessionStorage.getItem("exam_started")) {
-            sessionStorage.setItem("exam_started", "true");
-            kirimLog("Masuk & Mulai Fullscreen", 0);
-          }
-        }).catch(err => {
-          alert("Harap izinkan mode Layar Penuh pada browser Anda!");
+          if (suksesCallback) suksesCallback();
+        }).catch(() => {
+          // Tetap lanjutkan jika browser membatasi izin (misal di beberapa browser mobile)
+          if (suksesCallback) suksesCallback();
         });
+      } else {
+        // Fallback untuk perangkat tanpa Fullscreen API (seperti Safari di iPhone)
+        if (suksesCallback) suksesCallback();
       }
     }
 
-    // Pemantau Sensor Layar Penuh (Fullscreen Change)
+    // Inisialisasi Fullscreen Pertama
+    function masukFullscreenAwal() {
+      jalankanFullscreen(() => {
+        document.getElementById("overlayInit").classList.add("d-none");
+        if (!sessionStorage.getItem("exam_started")) {
+          sessionStorage.setItem("exam_started", "true");
+          kirimLog("Masuk & Mulai Fullscreen", 0);
+        }
+      });
+    }
+
+    // Sensor Layar Penuh
     document.addEventListener("fullscreenchange", periksaStatusLayarPenuh);
     document.addEventListener("webkitfullscreenchange", periksaStatusLayarPenuh);
 
     function periksaStatusLayarPenuh() {
       if (isUnloading || isExitingLegally) return;
 
+      // Hanya validasi jika perangkat benar-benar mendukung Fullscreen API
+      const isFSSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+      if (!isFSSupported) return;
+
       const isFS = document.fullscreenElement || document.webkitFullscreenElement;
       if (!isFS) {
-        // Siswa keluar fullscreen tanpa izin
         catatPelanggaran("Keluar Layar Penuh / Interupsi");
       }
     }
 
-    // Pemantau Kehilangan Fokus Jendela (Alt+Tab / Klik Luar)
+    // Sensor Pindah Tab / Minimize Browser (Sangat Efektif di Mobile)
+    document.addEventListener("visibilitychange", () => {
+      if (isUnloading || isExitingLegally) return;
+      if (document.visibilityState === "hidden") {
+        catatPelanggaran("Pindah Tab / Minimize Aplikasi");
+      }
+    });
+
+    // Sensor Kehilangan Fokus Layar (Dengan Toleransi Munculnya Virtual Keyboard HP)
     window.addEventListener("blur", () => {
       if (isUnloading || isExitingLegally) return;
 
       setTimeout(() => {
-        // Jika aktif elemen adalah IFRAME, berarti siswa sedang mengetik/mengklik soal
+        // Abaikan jika fokus sedang berada pada form soal Google Form
         if (document.activeElement && document.activeElement.tagName === "IFRAME") return;
+        // Abaikan jika window masih mempertahankan status hasFocus (misal saat keyboard HP muncul)
+        if (document.hasFocus && document.hasFocus()) return;
+
         catatPelanggaran("Beralih Aplikasi / Keluar Jendela");
-      }, 250);
+      }, 500); // Waktu jeda 500ms agar keyboard HP selesai memuat animasi
     });
 
-    // Blokir Pintasan Keyboard Terlarang
+    // Cegah Tombol Terlarang di Desktop
     document.addEventListener("keydown", (e) => {
       if (
         (e.ctrlKey && ["c", "u", "v", "s", "a", "p"].includes(e.key.toLowerCase())) ||
@@ -334,14 +423,14 @@
       if (isUnloading || isExitingLegally) return;
 
       const now = Date.now();
-      if (now - lastViolationTime < 1200) return; // Cooldown 1.2 detik cegah double-trigger
+      if (now - lastViolationTime < 1500) return; // Debounce 1.5 detik mencegah double-trigger di HP
       lastViolationTime = now;
 
       totalPelanggaran++;
       sessionStorage.setItem("exam_pelanggaran", totalPelanggaran);
       document.getElementById("navPelanggaran").innerText = totalPelanggaran;
 
-      // Sembunyikan lembar form soal agar tidak bisa diakses
+      // Sembunyikan frame soal sementara waktu
       document.getElementById("frameWrapper").style.visibility = "hidden";
 
       kirimLog(tipe, totalPelanggaran);
@@ -354,38 +443,33 @@
       }
     }
 
-    // Pemulihan Fullscreen dengan Token Siswa
+    // Pulihkan Fullscreen dengan Token Siswa
     function pulihkanFullscreen() {
       const input = document.getElementById("inputTokenPulih").value.trim().toUpperCase();
       const err = document.getElementById("errTokenPulih");
 
       if (input === tokenUjian) {
         err.classList.add("d-none");
-        const el = document.documentElement;
-        const requestFS = el.requestFullscreen || el.webkitRequestFullscreen;
-        
-        if (requestFS) {
-          requestFS.call(el).then(() => {
-            document.getElementById("overlayInterupsi").classList.add("d-none");
-            document.getElementById("frameWrapper").style.visibility = "visible";
-            kirimLog("Kembali Fullscreen (Token Valid)", totalPelanggaran);
-          });
-        }
+        jalankanFullscreen(() => {
+          document.getElementById("overlayInterupsi").classList.add("d-none");
+          document.getElementById("frameWrapper").style.visibility = "visible";
+          kirimLog("Kembali Fullscreen (Token Valid)", totalPelanggaran);
+        });
       } else {
         err.classList.remove("d-none");
       }
     }
 
-    // Kunci Total Layar
+    // Blokir Total Layar
     function kunciLayarTotal() {
       sessionStorage.setItem("exam_is_locked", "true");
       document.getElementById("overlayInterupsi").classList.add("d-none");
       document.getElementById("overlayBlokirTotal").classList.remove("d-none");
       document.getElementById("frameWrapper").style.visibility = "hidden";
-      kirimLog("Layar Terkunci Total (Melebihi Toleransi)", totalPelanggaran);
+      kirimLog("Layar Terkunci Total (Melebihi Batas)", totalPelanggaran);
     }
 
-    // Buka Kunci oleh Pengawas
+    // Buka Kunci Pengawas
     function bukaKunciPengawas() {
       const input = document.getElementById("inputTokenGuru").value.trim();
       const err = document.getElementById("errTokenGuru");
@@ -393,23 +477,17 @@
       if (input === tokenReset && tokenReset !== "") {
         err.classList.add("d-none");
         sessionStorage.setItem("exam_is_locked", "false");
-        
-        const el = document.documentElement;
-        const requestFS = el.requestFullscreen || el.webkitRequestFullscreen;
-        
-        if (requestFS) {
-          requestFS.call(el).then(() => {
-            document.getElementById("overlayBlokirTotal").classList.add("d-none");
-            document.getElementById("frameWrapper").style.visibility = "visible";
-            kirimLog("Dibuka Kembali oleh Pengawas", totalPelanggaran);
-          });
-        }
+        jalankanFullscreen(() => {
+          document.getElementById("overlayBlokirTotal").classList.add("d-none");
+          document.getElementById("frameWrapper").style.visibility = "visible";
+          kirimLog("Dibuka Kembali oleh Pengawas", totalPelanggaran);
+        });
       } else {
         err.classList.remove("d-none");
       }
     }
 
-    // Alur Selesai Ujian Resmi
+    // Konfirmasi Selesai Ujian
     function bukaModalSelesai() {
       document.getElementById("inputTokenSelesai").value = "";
       document.getElementById("errTokenSelesai").classList.add("d-none");
@@ -423,22 +501,21 @@
       if (input === tokenUjian) {
         isExitingLegally = true;
         modalSelesaiInstance.hide();
-
         kirimLog("Selesai Ujian & Keluar Sah", totalPelanggaran);
 
-        // Lepas mode fullscreen
         if (document.exitFullscreen) {
           document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
         }
 
-        // Arahkan ke halaman terminasi
         window.location.replace("finish.html");
       } else {
         err.classList.remove("d-none");
       }
     }
 
-    // Pengirim Data ke Backend Google Sheets
+    // Kirim Data Log ke Google Spreadsheet
     function kirimLog(aktivitas, count) {
       fetch(SCRIPT_URL, {
         method: "POST",
@@ -453,7 +530,7 @@
           aktivitas: aktivitas,
           totalPelanggaran: count
         })
-      }).catch(e => console.error("Gagal kirim log:", e));
+      }).catch(e => console.error("Log error:", e));
     }
   </script>
 </body>
