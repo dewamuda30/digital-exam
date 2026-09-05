@@ -555,7 +555,7 @@
       // 1. Ambil URL otomatis dari sesi login index.html atau fallback ke variabel SCRIPT_URL
       const targetUrl = sessionStorage.getItem("exam_script_url") || SCRIPT_URL;
 
-      if (!targetUrl || targetUrl.includes("URL_GOOGLE_APPS_SCRIPT")) {
+      if (!targetUrl || targetUrl.includes("https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec")) {
         console.error("Gagal kirim log: SCRIPT_URL belum disetel di index.html atau exam.html!");
         return;
       }
