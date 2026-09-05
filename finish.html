@@ -87,15 +87,15 @@
     <div class="icon-success-circle">
       <i class="bi bi-check-lg"></i>
     </div>
-    <h3 class="fw-bold mb-1">UJIAN SELESAI</h3>
-    <p class="small text-light opacity-75 mb-0">Jawaban dan status asesmen Anda telah terekam di sistem.</p>
+    <h3 class="fw-bold mb-1">UJIAN TELAH SELESAI</h3>
+    <p class="small text-light opacity-75 mb-0">Status asesmen dan catatan kehadiran Anda telah terekam.</p>
   </div>
 
   <div class="card-body p-4 p-md-5">
 
     <!-- Tabel Rekap Singkat -->
     <div class="bg-light rounded-3 p-3 mb-4 text-start border">
-      <div class="row g-2 small">
+      <div class="row g-2 small align-items-center">
         <div class="col-4 text-muted">Mata Pelajaran</div>
         <div class="col-8 fw-bold text-navy" id="resMapel">-</div>
 
@@ -106,12 +106,14 @@
         <div class="col-8 text-navy"><span id="resRuang">-</span> / <span id="resKelas">-</span></div>
 
         <div class="col-4 text-muted">Total Pelanggaran</div>
-        <div class="col-8" id="resPelanggaranBadge">-</div>
+        <div class="col-8">
+          <span class="badge bg-light text-navy border px-3 py-1 fw-bold fs-6" id="resPelanggaranBadge">0</span>
+        </div>
       </div>
     </div>
 
     <p class="small text-muted mb-4">
-      Terima kasih telah mengikuti ujian dengan tertib dan jujur. Silakan letakkan kembali perangkat Anda atau hubungi pengawas ruang.
+      Terima kasih telah mengerjakan ujian dengan tertib dan jujur. Silakan letakkan perangkat Anda di meja atau melapor kepada pengawas ruang.
     </p>
 
     <button onclick="keluarSesiKeBeranda()" class="btn btn-navy w-100 d-flex align-items-center justify-content-center gap-2">
@@ -123,7 +125,7 @@
 </div>
 
 <script>
-  // Kunci Riwayat Navigasi Browser (Mencegah Siswa Klik Tombol Back ke exam.html)
+  // Kunci Riwayat Navigasi Browser
   history.pushState(null, "", location.href);
   window.onpopstate = function () {
     history.pushState(null, "", location.href);
@@ -136,7 +138,6 @@
     const mapel = sessionStorage.getItem("exam_mapel");
     const pelanggaran = parseInt(sessionStorage.getItem("exam_pelanggaran") || "0", 10);
 
-    // Jika tidak ada histori ujian, kembalikan ke index.html
     if (!nama) {
       window.location.replace("index.html");
       return;
@@ -147,14 +148,10 @@
     document.getElementById("resRuang").innerText = ruang;
     document.getElementById("resMapel").innerText = mapel;
 
-    const badgeContainer = document.getElementById("resPelanggaranBadge");
-    if (pelanggaran === 0) {
-      badgeContainer.innerHTML = '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-shield-check me-1"></i>0 (Sangat Jujur)</span>';
-    } else {
-      badgeContainer.innerHTML = `<span class="badge bg-warning-subtle text-dark border border-warning-subtle px-2 py-1"><i class="bi bi-exclamation-circle me-1"></i>${pelanggaran} Kali Terdeteksi</span>`;
-    }
+    // Menampilkan murni angka pelanggaran tanpa teks tambahan
+    document.getElementById("resPelanggaranBadge").innerText = pelanggaran;
 
-    // Bersihkan data rahasia ujian dari memori sesi
+    // Bersihkan parameter form dan token rahasia
     sessionStorage.removeItem("exam_link_form");
     sessionStorage.removeItem("exam_token");
     sessionStorage.removeItem("exam_token_reset");
@@ -162,7 +159,6 @@
   });
 
   function keluarSesiKeBeranda() {
-    // Bersihkan seluruh sesi browser
     sessionStorage.clear();
     window.location.replace("index.html");
   }
