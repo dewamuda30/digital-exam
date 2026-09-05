@@ -258,7 +258,8 @@
       </p>
       <div class="mb-3 text-start bg-light p-3 rounded-3 border">
         <label class="form-label small fw-bold text-navy mb-1"><i class="bi bi-person-lock me-1"></i>Sandi Buka Pengawas</label>
-        <input type="password" id="inputTokenGuru" class="form-control form-control-secure text-center fw-bold py-2" placeholder="Sandi Reset Pengawas" autocomplete="off" onkeydown="if(event.key==='Enter') bukaKunciPengawas()">
+        <!-- autocomplete="new-password" mencegah browser menyimpan password guru -->
+        <input type="password" id="inputTokenGuru" class="form-control form-control-secure text-center fw-bold py-2" placeholder="Sandi Reset Pengawas" autocomplete="new-password" value="" onkeydown="if(event.key==='Enter') bukaKunciPengawas()">
         <div id="errTokenGuru" class="text-danger small mt-1 d-none">Sandi reset salah!</div>
       </div>
       <button class="btn btn-danger w-100 py-2 fw-semibold" onclick="bukaKunciPengawas()">
@@ -310,7 +311,6 @@
     const maxPelanggaran = parseInt(sessionStorage.getItem("exam_max_violation") || "3", 10);
     let totalPelanggaran = parseInt(sessionStorage.getItem("exam_pelanggaran") || "0", 10);
 
-    // Proteksi Rute: Jika belum login, tendang kembali ke index.html
     if (!namaSiswa || !kelasSiswa || !linkForm) {
       alert("Akses tidak sah. Silakan login terlebih dahulu!");
       window.location.replace("index.html");
@@ -341,7 +341,6 @@
       }
     });
 
-    // Helper: Eksekusi Masuk Fullscreen
     function jalankanFullscreen(suksesCallback) {
       const el = document.documentElement;
       const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
@@ -361,14 +360,13 @@
     function masukFullscreenAwal() {
       jalankanFullscreen(() => {
         document.getElementById("overlayInit").classList.add("d-none");
-        if (!sessionStorage.getItem("exam_started")) {
-          sessionStorage.setItem("exam_started", "true");
-          kirimLog("Masuk & Mulai Fullscreen", 0);
-        }
+        sessionStorage.setItem("exam_started", "true");
+        // Catatan log selalu dikirim saat siswa menekan tombol Mulai Sekarang
+        kirimLog("Masuk & Mulai Fullscreen", totalPelanggaran);
       });
     }
 
-    // Sensor Layar Penuh (Menangkap Aksi Esc atau Keluar Jendela)
+    // Sensor Layar Penuh
     document.addEventListener("fullscreenchange", periksaStatusLayarPenuh);
     document.addEventListener("webkitfullscreenchange", periksaStatusLayarPenuh);
 
@@ -389,7 +387,7 @@
       }
     });
 
-    // Sensor Kehilangan Fokus Layar (Alt+Tab / Klik Jendela Luar)
+    // Sensor Kehilangan Fokus Layar
     window.addEventListener("blur", () => {
       if (isUnloading || isExitingLegally) return;
 
@@ -429,7 +427,6 @@
       sessionStorage.setItem("exam_pelanggaran", totalPelanggaran);
       document.getElementById("navPelanggaran").innerText = totalPelanggaran;
 
-      // Sembunyikan form soal seketika
       document.getElementById("frameWrapper").style.visibility = "hidden";
 
       kirimLog(tipe, totalPelanggaran);
@@ -452,6 +449,7 @@
 
       if (input === tokenUjian || (tokenReset !== "" && input === tokenReset)) {
         err.classList.add("d-none");
+        document.getElementById("inputTokenPulih").value = "";
         jalankanFullscreen(() => {
           document.getElementById("overlayInterupsi").classList.add("d-none");
           document.getElementById("frameWrapper").style.visibility = "visible";
@@ -468,22 +466,35 @@
       document.getElementById("overlayInterupsi").classList.add("d-none");
       document.getElementById("overlayBlokirTotal").classList.remove("d-none");
       document.getElementById("frameWrapper").style.visibility = "hidden";
+
+      // KOSONGKAN PIN PENGAWAS SETIAP KALI TERKUNCI (Mencegah Tersimpan)
+      const inputEl = document.getElementById("inputTokenGuru");
+      if (inputEl) {
+        inputEl.value = "";
+      }
+      const errEl = document.getElementById("errTokenGuru");
+      if (errEl) {
+        errEl.classList.add("d-none");
+      }
+
       kirimLog("Layar Terkunci Total (Melebihi Batas)", totalPelanggaran);
       setTimeout(() => {
-        document.getElementById("inputTokenGuru").focus();
+        if (inputEl) inputEl.focus();
       }, 200);
     }
 
-    // Buka Kunci Pengawas (Akumulasi Pelanggaran Tetap Dipertahankan)
+    // Buka Kunci Pengawas
     function bukaKunciPengawas() {
-      const input = document.getElementById("inputTokenGuru").value.trim().toUpperCase();
+      const inputEl = document.getElementById("inputTokenGuru");
+      const input = inputEl.value.trim().toUpperCase();
       const err = document.getElementById("errTokenGuru");
 
       if (input === tokenReset && tokenReset !== "") {
         err.classList.add("d-none");
+        // HAPUS SEGERA DARI INPUT ELEMENT AGAR TIDAK BISA DIPAKAI ULANG SISWA
+        inputEl.value = "";
+
         sessionStorage.setItem("exam_is_locked", "false");
-        
-        // Tetap pertahankan totalPelanggaran asli dan update tampilan navbar
         document.getElementById("navPelanggaran").innerText = totalPelanggaran;
 
         jalankanFullscreen(() => {
@@ -493,6 +504,8 @@
         });
       } else {
         err.classList.remove("d-none");
+        inputEl.value = "";
+        inputEl.focus();
       }
     }
 
@@ -552,7 +565,8 @@
     function kirimLog(aktivitas, count) {
       const targetUrl = sessionStorage.getItem("exam_script_url") || SCRIPT_URL;
 
-      if (!targetUrl || targetUrl.includes("URL_GOOGLE_APPS_SCRIPT") || targetUrl.includes("contoh")) {
+      // Hanya tolak jika belum disetel atau placeholder
+      if (!targetUrl || targetUrl.trim() === "" || targetUrl.includes("URL_GOOGLE_APPS_SCRIPT") || targetUrl.includes("contoh")) {
         console.error("Gagal kirim log: SCRIPT_URL belum disetel!");
         return;
       }
@@ -569,6 +583,7 @@
       fetch(targetUrl, {
         method: "POST",
         mode: "no-cors",
+        keepalive: true,
         headers: {
           "Content-Type": "text/plain;charset=utf-8"
         },
