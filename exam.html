@@ -474,7 +474,7 @@
       }, 200);
     }
 
-    // Buka Kunci Pengawas (Reset Pelanggaran agar Tidak Langsung Terkunci Lagi)
+    // Buka Kunci Pengawas (Akumulasi Pelanggaran Tetap Dipertahankan)
     function bukaKunciPengawas() {
       const input = document.getElementById("inputTokenGuru").value.trim().toUpperCase();
       const err = document.getElementById("errTokenGuru");
@@ -483,15 +483,13 @@
         err.classList.add("d-none");
         sessionStorage.setItem("exam_is_locked", "false");
         
-        // Reset pelanggaran agar siswa dapat kesempatan melanjutkan ujian
-        totalPelanggaran = 0;
-        sessionStorage.setItem("exam_pelanggaran", "0");
-        document.getElementById("navPelanggaran").innerText = "0";
+        // Tetap pertahankan totalPelanggaran asli dan update tampilan navbar
+        document.getElementById("navPelanggaran").innerText = totalPelanggaran;
 
         jalankanFullscreen(() => {
           document.getElementById("overlayBlokirTotal").classList.add("d-none");
           document.getElementById("frameWrapper").style.visibility = "visible";
-          kirimLog("Dibuka Kembali oleh Pengawas (Reset Pelanggaran)", 0);
+          kirimLog("Dibuka Kembali oleh Pengawas (Akses Dipulihkan)", totalPelanggaran);
         });
       } else {
         err.classList.remove("d-none");
@@ -550,11 +548,10 @@
       }
     }
 
-    // Kirim Data Log ke Google Spreadsheet (Fix: URL Check Validated)
+    // Kirim Data Log ke Google Spreadsheet
     function kirimLog(aktivitas, count) {
       const targetUrl = sessionStorage.getItem("exam_script_url") || SCRIPT_URL;
 
-      // Hanya tolak jika belum diisi atau masih berupa template placeholder
       if (!targetUrl || targetUrl.includes("URL_GOOGLE_APPS_SCRIPT") || targetUrl.includes("contoh")) {
         console.error("Gagal kirim log: SCRIPT_URL belum disetel!");
         return;
