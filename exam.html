@@ -297,7 +297,7 @@
     // ==========================================================
     // TEMPELKAN WEB APP URL DARI APPS SCRIPT DI SINI:
     // ==========================================================
-    const SCRIPT_URL = "URL_GOOGLE_APPS_SCRIPT_DEPLOYMENT_ANDA";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec";
 
     // 1. Ambil Parameter Sesi Siswa
     const ruangSiswa = sessionStorage.getItem("exam_ruang");
@@ -550,23 +550,39 @@
     }
 
     // Kirim Data Log ke Google Spreadsheet
+    // Kirim Data Log ke Google Spreadsheet (Bebas Masalah CORS)
     function kirimLog(aktivitas, count) {
-      if (!SCRIPT_URL || SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec")) return;
+      // 1. Ambil URL otomatis dari sesi login index.html atau fallback ke variabel SCRIPT_URL
+      const targetUrl = sessionStorage.getItem("exam_script_url") || SCRIPT_URL;
 
-      fetch(SCRIPT_URL, {
+      if (!targetUrl || targetUrl.includes("URL_GOOGLE_APPS_SCRIPT")) {
+        console.error("Gagal kirim log: SCRIPT_URL belum disetel di index.html atau exam.html!");
+        return;
+      }
+
+      const payload = {
+        mapel: mapelSiswa || "-",
+        ruang: ruangSiswa || "-",
+        kelas: kelasSiswa || "-",
+        nama: namaSiswa || "-",
+        aktivitas: aktivitas || "-",
+        totalPelanggaran: count !== undefined ? count : 0
+      };
+
+      // TRIK UTAMA: Gunakan Content-Type: text/plain agar browser TIDAK 
+      // memicu request preflight OPTIONS yang selalu ditolak Google Apps Script.
+      fetch(targetUrl, {
         method: "POST",
         mode: "no-cors",
-        keepalive: true,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mapel: mapelSiswa,
-          ruang: ruangSiswa,
-          kelas: kelasSiswa,
-          nama: namaSiswa,
-          aktivitas: aktivitas,
-          totalPelanggaran: count
-        })
-      }).catch(e => console.error("Log error:", e));
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        console.log("Log terkirim ke Google Sheets:", aktivitas, "| Pelanggaran:", count);
+      }).catch(err => {
+        console.warn("Log jaringan terhambat:", err);
+      });
     }
   </script>
 </body>
