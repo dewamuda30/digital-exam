@@ -195,7 +195,7 @@
         <span><strong id="navPelanggaran">0</strong>x</span>
       </span>
 
-      <!-- Tombol Selesai Ujian (Tampil Aktif Sejak Awal) -->
+      <!-- Tombol Selesai Ujian -->
       <button class="btn-finish d-flex align-items-center gap-1" onclick="bukaModalSelesai()">
         <i class="bi bi-check2-circle"></i>
         <span>Selesai Ujian</span>
@@ -268,7 +268,7 @@
   </div>
 
   <!-- 4. MODAL KONFIRMASI SELESAI UJIAN -->
-  <div class="modal fade" id="modalSelesai" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal fade" id="modalSelesai" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-sm">
       <div class="modal-content rounded-4 border-0 p-2 shadow">
         <div class="modal-header border-0 pb-0">
@@ -295,7 +295,7 @@
 
   <script>
     // ==========================================================
-    // TEMPELKAN WEB APP URL DARI APPS SCRIPT DI SINI:
+    // URL BACKEND GOOGLE APPS SCRIPT
     // ==========================================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec";
 
@@ -474,7 +474,7 @@
       }, 200);
     }
 
-    // Buka Kunci Pengawas
+    // Buka Kunci Pengawas (Reset Pelanggaran agar Tidak Langsung Terkunci Lagi)
     function bukaKunciPengawas() {
       const input = document.getElementById("inputTokenGuru").value.trim().toUpperCase();
       const err = document.getElementById("errTokenGuru");
@@ -482,10 +482,16 @@
       if (input === tokenReset && tokenReset !== "") {
         err.classList.add("d-none");
         sessionStorage.setItem("exam_is_locked", "false");
+        
+        // Reset pelanggaran agar siswa dapat kesempatan melanjutkan ujian
+        totalPelanggaran = 0;
+        sessionStorage.setItem("exam_pelanggaran", "0");
+        document.getElementById("navPelanggaran").innerText = "0";
+
         jalankanFullscreen(() => {
           document.getElementById("overlayBlokirTotal").classList.add("d-none");
           document.getElementById("frameWrapper").style.visibility = "visible";
-          kirimLog("Dibuka Kembali oleh Pengawas", totalPelanggaran);
+          kirimLog("Dibuka Kembali oleh Pengawas (Reset Pelanggaran)", 0);
         });
       } else {
         err.classList.remove("d-none");
@@ -504,22 +510,19 @@
       }, 300);
     }
 
-    // VERIFIKASI SELESAI UJIAN (DIPERBAIKI SECARA DEFENSIVE)
+    // Verifikasi Selesai Ujian
     function verifikasiSelesaiUjian() {
       const input = document.getElementById("inputTokenSelesai").value.trim().toUpperCase();
       const err = document.getElementById("errTokenSelesai");
 
-      // Valid jika sesuai token siswa ATAU token pengawas
       const isValid = (tokenUjian !== "" && input === tokenUjian) || (tokenReset !== "" && input === tokenReset);
 
       if (isValid) {
         err.classList.add("d-none");
         isExitingLegally = true;
 
-        // 1. Simpan tanda sah
         sessionStorage.setItem("exam_completed", "true");
 
-        // 2. Lepas Fullscreen dengan aman (hanya jika memang sedang fullscreen)
         try {
           if (document.fullscreenElement || document.webkitFullscreenElement) {
             if (document.exitFullscreen) {
@@ -532,14 +535,12 @@
           console.warn("Fullscreen exit error:", fsErr);
         }
 
-        // 3. Kirim Catatan Log Akhir
         try {
           kirimLog("Selesai Ujian & Keluar Sah", totalPelanggaran);
         } catch (logErr) {
           console.warn("Log error:", logErr);
         }
 
-        // 4. Pengalihan halaman yang stabil
         setTimeout(() => {
           window.location.href = "finish.html";
         }, 150);
@@ -549,14 +550,13 @@
       }
     }
 
-    // Kirim Data Log ke Google Spreadsheet
-    // Kirim Data Log ke Google Spreadsheet (Bebas Masalah CORS)
+    // Kirim Data Log ke Google Spreadsheet (Fix: URL Check Validated)
     function kirimLog(aktivitas, count) {
-      // 1. Ambil URL otomatis dari sesi login index.html atau fallback ke variabel SCRIPT_URL
       const targetUrl = sessionStorage.getItem("exam_script_url") || SCRIPT_URL;
 
-      if (!targetUrl || targetUrl.includes("https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec")) {
-        console.error("Gagal kirim log: SCRIPT_URL belum disetel di index.html atau exam.html!");
+      // Hanya tolak jika belum diisi atau masih berupa template placeholder
+      if (!targetUrl || targetUrl.includes("URL_GOOGLE_APPS_SCRIPT") || targetUrl.includes("contoh")) {
+        console.error("Gagal kirim log: SCRIPT_URL belum disetel!");
         return;
       }
 
@@ -569,8 +569,6 @@
         totalPelanggaran: count !== undefined ? count : 0
       };
 
-      // TRIK UTAMA: Gunakan Content-Type: text/plain agar browser TIDAK 
-      // memicu request preflight OPTIONS yang selalu ditolak Google Apps Script.
       fetch(targetUrl, {
         method: "POST",
         mode: "no-cors",
@@ -579,9 +577,9 @@
         },
         body: JSON.stringify(payload)
       }).then(() => {
-        console.log("Log terkirim ke Google Sheets:", aktivitas, "| Pelanggaran:", count);
+        console.log("Log berhasil terkirim:", aktivitas, "| Pelanggaran:", count);
       }).catch(err => {
-        console.warn("Log jaringan terhambat:", err);
+        console.warn("Koneksi log terhambat:", err);
       });
     }
   </script>
