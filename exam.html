@@ -42,7 +42,7 @@
       flex-direction: column;
     }
 
-    /* NAVBAR RESPONSIF */
+    /* NAVBAR */
     .navbar-exam {
       background-color: var(--primary-navy);
       color: var(--white);
@@ -60,15 +60,15 @@
       background: rgba(255, 255, 255, 0.15);
       color: #fff;
       font-weight: 600;
-      max-width: 140px;
+      max-width: 150px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       display: inline-block;
       vertical-align: middle;
-      padding: 5px 8px;
+      padding: 5px 10px;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
     }
 
     @media (min-width: 768px) {
@@ -77,13 +77,13 @@
         min-height: 60px;
       }
       .badge-mapel {
-        max-width: 320px;
+        max-width: 350px;
         font-size: 0.9rem;
-        padding: 6px 12px;
+        padding: 6px 14px;
       }
     }
 
-    /* KONTAINER SOAL (IFRAME) */
+    /* KONTAINER IFRAME SOAL */
     .frame-wrapper {
       flex: 1 1 0%;
       min-height: 0;
@@ -101,48 +101,14 @@
       background-color: var(--white);
     }
 
-    /* OVERLAY PENGUNCI LAYAR */
-    .lock-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      background-color: rgba(13, 27, 42, 0.98);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      z-index: 999999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .lock-card {
-      width: 100%;
-      max-width: 440px;
-      background: var(--white);
-      border-radius: 1.25rem;
-      padding: 26px 22px;
-      text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-      margin: auto;
-    }
-
-    @media (min-width: 768px) {
-      .lock-card {
-        padding: 32px 28px;
-      }
-    }
-
+    /* TOMBOL AKSI */
     .btn-finish {
       background-color: #059669;
       color: var(--white);
       font-weight: 600;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       border: none;
-      padding: 6px 10px;
+      padding: 6px 14px;
       border-radius: 6px;
       white-space: nowrap;
       transition: background 0.2s;
@@ -168,6 +134,40 @@
       color: var(--white);
     }
 
+    /* OVERLAY PENGUNCI LAYAR */
+    .lock-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background-color: rgba(13, 27, 42, 0.98);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .lock-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--white);
+      border-radius: 1.25rem;
+      padding: 26px 22px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      margin: auto;
+    }
+
+    @media (min-width: 768px) {
+      .lock-card {
+        padding: 32px 28px;
+      }
+    }
+
     .form-control-secure {
       font-size: 16px !important;
       letter-spacing: 0.05em;
@@ -179,7 +179,7 @@
   <!-- Header Navigasi Ujian -->
   <header class="navbar-exam shadow-sm">
     <div class="d-flex align-items-center gap-2 overflow-hidden">
-      <span class="badge-mapel" id="navMapel" title="Mata Pelajaran">
+      <span class="badge-mapel" id="navMapel">
         <i class="bi bi-journal-text me-1"></i><span id="navMapelText">Ujian</span>
       </span>
       
@@ -195,15 +195,15 @@
         <span><strong id="navPelanggaran">0</strong>x</span>
       </span>
 
-      <!-- Tombol Selesai Ujian -->
+      <!-- Tombol Selesai Ujian (Tampil Aktif Sejak Awal) -->
       <button class="btn-finish d-flex align-items-center gap-1" onclick="bukaModalSelesai()">
         <i class="bi bi-check2-circle"></i>
-        <span>Selesai</span>
+        <span>Selesai Ujian</span>
       </button>
     </div>
   </header>
 
-  <!-- Kontainer Iframe Soal -->
+  <!-- Kontainer Iframe Soal Google Form -->
   <main class="frame-wrapper" id="frameWrapper">
     <iframe id="examIframe" src="about:blank" allow="autoplay">Memuat lembar soal...</iframe>
   </main>
@@ -216,7 +216,7 @@
       </div>
       <h5 class="fw-bold text-navy mb-2">Masuk Ruang Ujian</h5>
       <p class="text-muted small mb-4">
-        Sistem akan mengunci layar ke mode Layar Penuh (*Fullscreen*). Pastikan Anda tidak keluar layar hingga ujian selesai.
+        Sistem akan mengunci layar Anda ke mode Layar Penuh (*Fullscreen*). Pastikan Anda tidak keluar layar sampai ujian selesai.
       </p>
       <button class="btn btn-navy w-100 py-2 d-flex align-items-center justify-content-center gap-2" onclick="masukFullscreenAwal()">
         <i class="bi bi-fullscreen"></i>
@@ -225,7 +225,7 @@
     </div>
   </div>
 
-  <!-- 2. OVERLAY INTERUPSI (Keluar Fullscreen / Menekan ESC < Batas Toleransi) -->
+  <!-- 2. OVERLAY INTERUPSI (Keluar Layar / Tekan Esc < Batas) -->
   <div id="overlayInterupsi" class="lock-overlay d-none">
     <div class="lock-card">
       <div class="mb-2">
@@ -233,7 +233,7 @@
       </div>
       <h5 class="fw-bold text-danger mb-1">TERDETEKSI KELUAR!</h5>
       <p class="text-muted small mb-3">
-        Layar ujian dikunci karena Anda mencoba meninggalkan layar penuh atau menekan tombol keluar. Kejadian ini telah dicatat ke sistem pengawas.
+        Layar ujian dikunci karena Anda mencoba meninggalkan layar penuh atau berpindah aplikasi. Kejadian ini dicatat di sistem pengawas.
       </p>
       <div class="mb-3">
         <label class="form-label small fw-semibold text-navy">Masukkan Token Ujian untuk Melanjutkan</label>
@@ -270,14 +270,14 @@
   <!-- 4. MODAL KONFIRMASI SELESAI UJIAN -->
   <div class="modal fade" id="modalSelesai" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content rounded-4 border-0 p-2">
+      <div class="modal-content rounded-4 border-0 p-2 shadow">
         <div class="modal-header border-0 pb-0">
           <h6 class="modal-title fw-bold text-navy"><i class="bi bi-check-circle-fill text-success me-2"></i>Akhiri Ujian</h6>
         </div>
         <div class="modal-body text-secondary small py-2">
-          <p class="mb-2">Pastikan sudah menekan tombol <strong>KIRIM (SUBMIT)</strong> di dalam Google Form sebelum mengakhiri sesi.</p>
+          <p class="mb-2">Pastikan Anda sudah menekan tombol <strong>KIRIM (SUBMIT)</strong> di lembar soal Google Form.</p>
           <div class="my-2">
-            <label class="form-label fw-bold text-navy small mb-1">Token Ujian Konfirmasi:</label>
+            <label class="form-label fw-bold text-navy small mb-1">Masukkan Token Ujian untuk Konfirmasi:</label>
             <input type="text" id="inputTokenSelesai" class="form-control form-control-secure text-uppercase text-center fw-bold py-2" placeholder="TOKEN SESI" autocomplete="off" onkeydown="if(event.key==='Enter') verifikasiSelesaiUjian()">
             <div id="errTokenSelesai" class="text-danger small mt-1 d-none">Token tidak sesuai!</div>
           </div>
@@ -306,7 +306,7 @@
     const mapelSiswa = sessionStorage.getItem("exam_mapel");
     const linkForm = sessionStorage.getItem("exam_link_form");
     const tokenUjian = (sessionStorage.getItem("exam_token") || "").trim().toUpperCase();
-    const tokenReset = (sessionStorage.getItem("exam_token_reset") || "").trim();
+    const tokenReset = (sessionStorage.getItem("exam_token_reset") || "").trim().toUpperCase();
     const maxPelanggaran = parseInt(sessionStorage.getItem("exam_max_violation") || "3", 10);
     let totalPelanggaran = parseInt(sessionStorage.getItem("exam_pelanggaran") || "0", 10);
 
@@ -330,40 +330,24 @@
       document.getElementById("navNama").innerText = namaSiswa;
       document.getElementById("navPelanggaran").innerText = totalPelanggaran;
       document.getElementById("examIframe").src = linkForm;
-      modalSelesaiInstance = new bootstrap.Modal(document.getElementById("modalSelesai"));
+      
+      const modalEl = document.getElementById("modalSelesai");
+      if (modalEl && typeof bootstrap !== "undefined") {
+        modalSelesaiInstance = new bootstrap.Modal(modalEl);
+      }
 
       if (sessionStorage.getItem("exam_is_locked") === "true") {
         kunciLayarTotal();
       }
     });
 
-    // ==========================================================
-    // FITUR KUNCI TOMBOL ESC (KEYBOARD LOCK API)
-    // ==========================================================
-    async function aktifkanKeyboardLock() {
-      if ('keyboard' in navigator && typeof navigator.keyboard.lock === 'function') {
-        try {
-          await navigator.keyboard.lock(['Escape']);
-        } catch (err) {
-          console.warn("Keyboard lock tidak didukung atau dibatasi:", err);
-        }
-      }
-    }
-
-    function lepasKeyboardLock() {
-      if ('keyboard' in navigator && typeof navigator.keyboard.unlock === 'function') {
-        navigator.keyboard.unlock();
-      }
-    }
-
-    // Helper: Eksekusi Request Fullscreen + Keyboard Lock
+    // Helper: Eksekusi Masuk Fullscreen
     function jalankanFullscreen(suksesCallback) {
       const el = document.documentElement;
       const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
 
       if (requestFS) {
-        requestFS.call(el).then(async () => {
-          await aktifkanKeyboardLock();
+        requestFS.call(el).then(() => {
           if (suksesCallback) suksesCallback();
         }).catch(() => {
           if (suksesCallback) suksesCallback();
@@ -384,20 +368,16 @@
       });
     }
 
-    // Pemantau Sensor Layar Penuh (Jika Berhasil Lolos Keluar)
+    // Sensor Layar Penuh (Menangkap Aksi Esc atau Keluar Jendela)
     document.addEventListener("fullscreenchange", periksaStatusLayarPenuh);
     document.addEventListener("webkitfullscreenchange", periksaStatusLayarPenuh);
 
     function periksaStatusLayarPenuh() {
       if (isUnloading || isExitingLegally) return;
 
-      const isFSSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
-      if (!isFSSupported) return;
-
       const isFS = document.fullscreenElement || document.webkitFullscreenElement;
       if (!isFS) {
-        // Jika browser benar-benar lepas dari fullscreen
-        catatPelanggaran("Keluar Layar Penuh / Menekan Keluar");
+        catatPelanggaran("Keluar Layar Penuh / Menekan Esc");
       }
     }
 
@@ -421,16 +401,13 @@
       }, 400);
     });
 
-    // PENCEGAHAN KEYBOARD & INTERSEPSI TOMBOL ESC
+    // Pencegahan Pintasan Keyboard Terlarang
     document.addEventListener("keydown", (e) => {
-      // Intersepsi tombol ESC langsung sebelum browser memproses keluar
       if (e.key === "Escape" || e.keyCode === 27) {
-        e.preventDefault();
-        catatPelanggaran("Mencoba Keluar / Menekan ESC");
+        catatPelanggaran("Mencoba Keluar / Menekan Esc");
         return;
       }
 
-      // Cegah Shortcut Umum Pembuka Tab, Inspeksi, dan Salin
       if (
         (e.ctrlKey && ["c", "u", "v", "s", "a", "p", "w", "t", "r"].includes(e.key.toLowerCase())) ||
         e.key === "F12" || e.key === "F11" || e.key === "F5"
@@ -445,7 +422,7 @@
       if (isUnloading || isExitingLegally) return;
 
       const now = Date.now();
-      if (now - lastViolationTime < 1200) return; // Debounce cegah multi-trigger
+      if (now - lastViolationTime < 1200) return;
       lastViolationTime = now;
 
       totalPelanggaran++;
@@ -462,7 +439,9 @@
       } else {
         document.getElementById("overlayInterupsi").classList.remove("d-none");
         document.getElementById("inputTokenPulih").value = "";
-        document.getElementById("inputTokenPulih").focus();
+        setTimeout(() => {
+          document.getElementById("inputTokenPulih").focus();
+        }, 200);
       }
     }
 
@@ -471,9 +450,8 @@
       const input = document.getElementById("inputTokenPulih").value.trim().toUpperCase();
       const err = document.getElementById("errTokenPulih");
 
-      if (input === tokenUjian) {
+      if (input === tokenUjian || (tokenReset !== "" && input === tokenReset)) {
         err.classList.add("d-none");
-        // Kembalikan ke Fullscreen + Kunci Keyboard Esc kembali
         jalankanFullscreen(() => {
           document.getElementById("overlayInterupsi").classList.add("d-none");
           document.getElementById("frameWrapper").style.visibility = "visible";
@@ -498,7 +476,7 @@
 
     // Buka Kunci Pengawas
     function bukaKunciPengawas() {
-      const input = document.getElementById("inputTokenGuru").value.trim();
+      const input = document.getElementById("inputTokenGuru").value.trim().toUpperCase();
       const err = document.getElementById("errTokenGuru");
 
       if (input === tokenReset && tokenReset !== "") {
@@ -514,36 +492,58 @@
       }
     }
 
-    // Konfirmasi Selesai Ujian Resmi
+    // Konfirmasi Selesai Ujian
     function bukaModalSelesai() {
       document.getElementById("inputTokenSelesai").value = "";
       document.getElementById("errTokenSelesai").classList.add("d-none");
-      modalSelesaiInstance.show();
+      if (modalSelesaiInstance) {
+        modalSelesaiInstance.show();
+      }
       setTimeout(() => {
         document.getElementById("inputTokenSelesai").focus();
       }, 300);
     }
 
+    // VERIFIKASI SELESAI UJIAN (DIPERBAIKI SECARA DEFENSIVE)
     function verifikasiSelesaiUjian() {
       const input = document.getElementById("inputTokenSelesai").value.trim().toUpperCase();
       const err = document.getElementById("errTokenSelesai");
 
-      if (input === tokenUjian) {
+      // Valid jika sesuai token siswa ATAU token pengawas
+      const isValid = (tokenUjian !== "" && input === tokenUjian) || (tokenReset !== "" && input === tokenReset);
+
+      if (isValid) {
+        err.classList.add("d-none");
         isExitingLegally = true;
-        modalSelesaiInstance.hide();
-        kirimLog("Selesai Ujian & Keluar Sah", totalPelanggaran);
 
-        // Lepas Keyboard Lock
-        lepasKeyboardLock();
+        // 1. Simpan tanda sah
+        sessionStorage.setItem("exam_completed", "true");
 
-        // Lepas Fullscreen secara legal
-        if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
+        // 2. Lepas Fullscreen dengan aman (hanya jika memang sedang fullscreen)
+        try {
+          if (document.fullscreenElement || document.webkitFullscreenElement) {
+            if (document.exitFullscreen) {
+              document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+              document.webkitExitFullscreen();
+            }
+          }
+        } catch (fsErr) {
+          console.warn("Fullscreen exit error:", fsErr);
         }
 
-        window.location.replace("finish.html");
+        // 3. Kirim Catatan Log Akhir
+        try {
+          kirimLog("Selesai Ujian & Keluar Sah", totalPelanggaran);
+        } catch (logErr) {
+          console.warn("Log error:", logErr);
+        }
+
+        // 4. Pengalihan halaman yang stabil
+        setTimeout(() => {
+          window.location.href = "finish.html";
+        }, 150);
+
       } else {
         err.classList.remove("d-none");
       }
@@ -551,6 +551,8 @@
 
     // Kirim Data Log ke Google Spreadsheet
     function kirimLog(aktivitas, count) {
+      if (!SCRIPT_URL || SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec")) return;
+
       fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
