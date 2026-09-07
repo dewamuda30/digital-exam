@@ -214,8 +214,8 @@
       <div class="mb-3 text-navy">
         <i class="bi bi-arrows-fullscreen display-5 text-primary"></i>
       </div>
-      <h5 class="fw-bold text-navy mb-2">Masuk Ruang Ujian</h5>
-      <p class="text-muted small mb-4">
+      <h5 class="fw-bold text-navy mb-2" id="initTitle">Masuk Ruang Ujian</h5>
+      <p class="text-muted small mb-4" id="initDesc">
         Sistem akan mengunci layar Anda ke mode Layar Penuh (*Fullscreen*). Pastikan Anda tidak keluar layar sampai ujian selesai.
       </p>
       <button class="btn btn-navy w-100 py-2 d-flex align-items-center justify-content-center gap-2" onclick="masukFullscreenAwal()">
@@ -258,7 +258,6 @@
       </p>
       <div class="mb-3 text-start bg-light p-3 rounded-3 border">
         <label class="form-label small fw-bold text-navy mb-1"><i class="bi bi-person-lock me-1"></i>Sandi Buka Pengawas</label>
-        <!-- autocomplete="new-password" mencegah browser menyimpan password guru -->
         <input type="password" id="inputTokenGuru" class="form-control form-control-secure text-center fw-bold py-2" placeholder="Sandi Reset Pengawas" autocomplete="new-password" value="" onkeydown="if(event.key==='Enter') bukaKunciPengawas()">
         <div id="errTokenGuru" class="text-danger small mt-1 d-none">Sandi reset salah!</div>
       </div>
@@ -295,12 +294,8 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // ==========================================================
-    // URL BACKEND GOOGLE APPS SCRIPT
-    // ==========================================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec";
 
-    // 1. Ambil Parameter Sesi Siswa
     const ruangSiswa = sessionStorage.getItem("exam_ruang");
     const kelasSiswa = sessionStorage.getItem("exam_kelas");
     const namaSiswa = sessionStorage.getItem("exam_nama");
@@ -310,6 +305,7 @@
     const tokenReset = (sessionStorage.getItem("exam_token_reset") || "").trim().toUpperCase();
     const maxPelanggaran = parseInt(sessionStorage.getItem("exam_max_violation") || "3", 10);
     let totalPelanggaran = parseInt(sessionStorage.getItem("exam_pelanggaran") || "0", 10);
+    const isResumed = sessionStorage.getItem("exam_is_resumed") === "true";
 
     if (!namaSiswa || !kelasSiswa || !linkForm) {
       alert("Akses tidak sah. Silakan login terlebih dahulu!");
@@ -321,7 +317,19 @@
     let lastViolationTime = 0;
     let modalSelesaiInstance = null;
 
-    window.addEventListener("beforeunload", () => { isUnloading = true; });
+    // DETEKSI AKSI TUTUP TAB / KELUAR PAKSA
+    window.addEventListener("beforeunload", (e) => {
+      isUnloading = true;
+      if (!isExitingLegally) {
+        totalPelanggaran++;
+        sessionStorage.setItem("exam_pelanggaran", totalPelanggaran);
+        localStorage.setItem(`exam_v_${namaSiswa}_${mapelSiswa}`, totalPelanggaran);
+        kirimLog("Menutup Tab / Keluar Paksa", totalPelanggaran);
+
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
 
     window.addEventListener("DOMContentLoaded", () => {
       document.getElementById("navMapelText").innerText = mapelSiswa || "Ujian";
@@ -336,8 +344,16 @@
         modalSelesaiInstance = new bootstrap.Modal(modalEl);
       }
 
-      if (sessionStorage.getItem("exam_is_locked") === "true") {
+      // 1. JIKA SEBELUM MENUTUP TAB SUDAH TERKUNCI TOTAL
+      if (sessionStorage.getItem("exam_is_locked") === "true" || totalPelanggaran >= maxPelanggaran) {
+        document.getElementById("overlayInit").classList.add("d-none");
         kunciLayarTotal();
+      } 
+      // 2. JIKA MELANJUTKAN SESI DENGAN REKAP PELANGGARAN SEBELUMNYA
+      else if (isResumed) {
+        document.getElementById("initTitle").innerText = "Lanjutkan Sesi Ujian";
+        document.getElementById("initDesc").innerHTML = 
+          `Anda terdeteksi melanjutkan sesi sebelumnya. Akumulasi pelanggaran saat ini: <strong>${totalPelanggaran}x</strong>. Silakan masuk kembali ke Layar Penuh untuk melanjutkan pengerjaan soal.`;
       }
     });
 
@@ -356,17 +372,19 @@
       }
     }
 
-    // Inisialisasi Fullscreen Pertama
     function masukFullscreenAwal() {
       jalankanFullscreen(() => {
         document.getElementById("overlayInit").classList.add("d-none");
         sessionStorage.setItem("exam_started", "true");
-        // Catatan log selalu dikirim saat siswa menekan tombol Mulai Sekarang
-        kirimLog("Masuk & Mulai Fullscreen", totalPelanggaran);
+
+        if (isResumed) {
+          kirimLog("Melanjutkan Ujian (Login Kembali Pasca Tutup Tab)", totalPelanggaran);
+        } else {
+          kirimLog("Masuk & Mulai Fullscreen", totalPelanggaran);
+        }
       });
     }
 
-    // Sensor Layar Penuh
     document.addEventListener("fullscreenchange", periksaStatusLayarPenuh);
     document.addEventListener("webkitfullscreenchange", periksaStatusLayarPenuh);
 
@@ -379,7 +397,6 @@
       }
     }
 
-    // Sensor Pindah Tab / Minimize Browser
     document.addEventListener("visibilitychange", () => {
       if (isUnloading || isExitingLegally) return;
       if (document.visibilityState === "hidden") {
@@ -387,7 +404,6 @@
       }
     });
 
-    // Sensor Kehilangan Fokus Layar
     window.addEventListener("blur", () => {
       if (isUnloading || isExitingLegally) return;
 
@@ -399,7 +415,6 @@
       }, 400);
     });
 
-    // Pencegahan Pintasan Keyboard Terlarang
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" || e.keyCode === 27) {
         catatPelanggaran("Mencoba Keluar / Menekan Esc");
@@ -415,7 +430,6 @@
       }
     });
 
-    // Prosedur Catat Pelanggaran & Sergap Layar
     function catatPelanggaran(tipe) {
       if (isUnloading || isExitingLegally) return;
 
@@ -425,6 +439,7 @@
 
       totalPelanggaran++;
       sessionStorage.setItem("exam_pelanggaran", totalPelanggaran);
+      localStorage.setItem(`exam_v_${namaSiswa}_${mapelSiswa}`, totalPelanggaran);
       document.getElementById("navPelanggaran").innerText = totalPelanggaran;
 
       document.getElementById("frameWrapper").style.visibility = "hidden";
@@ -442,7 +457,6 @@
       }
     }
 
-    // Pulihkan Fullscreen dengan Token Siswa
     function pulihkanFullscreen() {
       const input = document.getElementById("inputTokenPulih").value.trim().toUpperCase();
       const err = document.getElementById("errTokenPulih");
@@ -460,22 +474,17 @@
       }
     }
 
-    // Blokir Total Layar
     function kunciLayarTotal() {
       sessionStorage.setItem("exam_is_locked", "true");
+      localStorage.setItem(`exam_lock_${namaSiswa}_${mapelSiswa}`, "true");
       document.getElementById("overlayInterupsi").classList.add("d-none");
       document.getElementById("overlayBlokirTotal").classList.remove("d-none");
       document.getElementById("frameWrapper").style.visibility = "hidden";
 
-      // KOSONGKAN PIN PENGAWAS SETIAP KALI TERKUNCI (Mencegah Tersimpan)
       const inputEl = document.getElementById("inputTokenGuru");
-      if (inputEl) {
-        inputEl.value = "";
-      }
+      if (inputEl) inputEl.value = "";
       const errEl = document.getElementById("errTokenGuru");
-      if (errEl) {
-        errEl.classList.add("d-none");
-      }
+      if (errEl) errEl.classList.add("d-none");
 
       kirimLog("Layar Terkunci Total (Melebihi Batas)", totalPelanggaran);
       setTimeout(() => {
@@ -483,7 +492,6 @@
       }, 200);
     }
 
-    // Buka Kunci Pengawas
     function bukaKunciPengawas() {
       const inputEl = document.getElementById("inputTokenGuru");
       const input = inputEl.value.trim().toUpperCase();
@@ -491,10 +499,10 @@
 
       if (input === tokenReset && tokenReset !== "") {
         err.classList.add("d-none");
-        // HAPUS SEGERA DARI INPUT ELEMENT AGAR TIDAK BISA DIPAKAI ULANG SISWA
         inputEl.value = "";
 
         sessionStorage.setItem("exam_is_locked", "false");
+        localStorage.setItem(`exam_lock_${namaSiswa}_${mapelSiswa}`, "false");
         document.getElementById("navPelanggaran").innerText = totalPelanggaran;
 
         jalankanFullscreen(() => {
@@ -509,7 +517,6 @@
       }
     }
 
-    // Konfirmasi Selesai Ujian
     function bukaModalSelesai() {
       document.getElementById("inputTokenSelesai").value = "";
       document.getElementById("errTokenSelesai").classList.add("d-none");
@@ -521,7 +528,6 @@
       }, 300);
     }
 
-    // Verifikasi Selesai Ujian
     function verifikasiSelesaiUjian() {
       const input = document.getElementById("inputTokenSelesai").value.trim().toUpperCase();
       const err = document.getElementById("errTokenSelesai");
@@ -533,6 +539,7 @@
         isExitingLegally = true;
 
         sessionStorage.setItem("exam_completed", "true");
+        localStorage.setItem(`exam_done_${namaSiswa}_${mapelSiswa}`, "true");
 
         try {
           if (document.fullscreenElement || document.webkitFullscreenElement) {
@@ -561,11 +568,9 @@
       }
     }
 
-    // Kirim Data Log ke Google Spreadsheet
     function kirimLog(aktivitas, count) {
       const targetUrl = sessionStorage.getItem("exam_script_url") || SCRIPT_URL;
 
-      // Hanya tolak jika belum disetel atau placeholder
       if (!targetUrl || targetUrl.trim() === "" || targetUrl.includes("URL_GOOGLE_APPS_SCRIPT") || targetUrl.includes("contoh")) {
         console.error("Gagal kirim log: SCRIPT_URL belum disetel!");
         return;
