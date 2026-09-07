@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Live Proctoring Monitor</title>
 
   <!-- Bootstrap 5.3 & Icons -->
@@ -21,15 +21,21 @@
       --text-main: #f8fafc;
     }
 
-    body {
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      min-height: 100%;
+      min-height: 100dvh;
       background-color: var(--bg-dark);
       color: var(--text-main);
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      min-height: 100vh;
       margin: 0;
+      padding: 0;
     }
 
-    /* GATE MODAL */
+    /* LOGIN GATE */
     .login-card {
       max-width: 420px;
       background: var(--panel-navy);
@@ -37,21 +43,53 @@
       border-radius: 1.2rem;
     }
 
-    /* PROYEKSI HEADER */
+    /* NAVBAR HEADER */
     .proyektor-nav {
       background: var(--panel-navy);
       border-bottom: 2px solid rgba(59, 130, 246, 0.3);
-      padding: 14px 24px;
+      padding: 10px 14px;
+    }
+
+    @media (min-width: 768px) {
+      .proyektor-nav {
+        padding: 14px 24px;
+      }
+    }
+
+    /* KARTU RINGKASAN STATISTIK */
+    .stat-box {
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 0.75rem;
+      padding: 10px 8px;
+    }
+
+    .stat-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    @media (min-width: 768px) {
+      .stat-label {
+        font-size: 0.75rem;
+      }
     }
 
     /* KARTU SISWA */
     .card-siswa {
       background-color: var(--panel-navy);
       border: 2px solid rgba(255, 255, 255, 0.06);
-      border-radius: 1rem;
-      padding: 16px;
+      border-radius: 0.85rem;
+      padding: 12px 14px;
       position: relative;
-      transition: all 0.3s ease;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    @media (min-width: 768px) {
+      .card-siswa {
+        padding: 16px;
+        border-radius: 1rem;
+      }
     }
 
     .card-siswa.status-terkunci {
@@ -71,19 +109,29 @@
 
     @keyframes pulse-red {
       0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-      70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
     .v-badge {
-      font-size: 1.4rem;
+      font-size: 1.15rem;
       font-weight: 800;
-      min-width: 44px;
-      height: 44px;
+      min-width: 36px;
+      height: 36px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 0.5rem;
+      border-radius: 0.45rem;
+      flex-shrink: 0;
+    }
+
+    @media (min-width: 768px) {
+      .v-badge {
+        font-size: 1.35rem;
+        min-width: 42px;
+        height: 42px;
+        border-radius: 0.5rem;
+      }
     }
 
     .badge-zero { background: rgba(16, 185, 129, 0.2); color: var(--success-green); border: 1px solid var(--success-green); }
@@ -94,8 +142,15 @@
     .ticker-bar {
       background: #0a1322;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 10px 20px;
-      font-size: 0.85rem;
+      padding: 8px 14px;
+      font-size: 0.78rem;
+    }
+
+    @media (min-width: 768px) {
+      .ticker-bar {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+      }
     }
   </style>
 </head>
@@ -103,11 +158,11 @@
 
   <!-- 1. LOGIN GATE KHUSUS PENGAWAS RUANG -->
   <div id="gateSection" class="d-flex align-items-center justify-content-center min-vh-100 p-3">
-    <div class="card login-card w-100 p-4 shadow-lg">
+    <div class="card login-card w-100 p-3 p-sm-4 shadow-lg">
       <div class="text-center mb-4">
-        <div class="display-5 text-primary mb-2"><i class="bi bi-display"></i></div>
-        <h4 class="fw-bold mb-1">Dasbor Pengawas Ruang</h4>
-        <p class="text-muted small">Hubungkan ke proyektor untuk pemantauan ruangan.</p>
+        <div class="display-6 text-primary mb-2"><i class="bi bi-display"></i></div>
+        <h5 class="fw-bold mb-1 text-white">Dasbor Pengawas Ruang</h5>
+        <p class="text-muted small mb-0">Pantau aktivitas ujian langsung dari smartphone atau proyektor.</p>
       </div>
 
       <div class="mb-3">
@@ -124,73 +179,73 @@
       </div>
 
       <button class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" onclick="masukDashboard()">
-        <i class="bi bi-broadcast"></i> Mulai Tayangan Proyektor
+        <i class="bi bi-broadcast"></i> Mulai Monitoring
       </button>
     </div>
   </div>
 
-  <!-- 2. DASHBOARD TAMPILAN PROYEKTOR -->
+  <!-- 2. DASHBOARD TAMPILAN MONITORING -->
   <div id="dashSection" class="d-none min-vh-100 d-flex flex-column">
     
-    <!-- Navbar Header Proyektor -->
-    <header class="proyektor-nav d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-3">
-        <span class="badge bg-primary px-3 py-2 fs-6 fw-bold" id="badgeRoomTitle">RUANG --</span>
-        <div>
-          <h5 class="fw-bold mb-0 text-white">SISTEM PENGAWASAN ASESMEN</h5>
-          <small class="text-secondary">Peringatan: Setiap interupsi jendela tercatat real-time di layar depan.</small>
+    <!-- Navbar Responsif -->
+    <header class="proyektor-nav d-flex justify-content-between align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 overflow-hidden">
+        <span class="badge bg-primary px-2 py-1 px-md-3 py-md-2 fw-bold text-nowrap" id="badgeRoomTitle">RUANG --</span>
+        <div class="text-truncate">
+          <h6 class="fw-bold mb-0 text-white text-truncate" style="font-size: 0.92rem;">PENGAWASAN ASESMEN</h6>
+          <small class="text-secondary d-none d-sm-inline" style="font-size: 0.72rem;">Interupsi jendela terekam langsung.</small>
         </div>
       </div>
 
-      <div class="d-flex align-items-center gap-4">
+      <div class="d-flex align-items-center gap-2 gap-md-3 flex-shrink-0">
         <div class="text-end">
-          <div class="text-secondary small">Waktu Sistem:</div>
-          <div class="fw-bold fs-5 text-info" id="clockText">--:--:--</div>
+          <div class="text-secondary d-none d-sm-block" style="font-size: 0.7rem;">Waktu Sistem:</div>
+          <div class="fw-bold text-info" id="clockText" style="font-size: 0.95rem;">--:--:--</div>
         </div>
-        <button class="btn btn-outline-secondary btn-sm" onclick="keluarDashboard()" title="Keluar">
+        <button class="btn btn-outline-secondary btn-sm px-2 py-1" onclick="keluarDashboard()" title="Keluar">
           <i class="bi bi-box-arrow-right"></i>
         </button>
       </div>
     </header>
 
-    <!-- Ringkasan Statistik Ruangan -->
-    <div class="container-fluid px-4 py-3">
-      <div class="row g-3 text-center mb-3">
-        <div class="col-3">
-          <div class="card bg-secondary bg-opacity-10 border-0 p-2 rounded-3">
-            <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.75rem;">Total Siswa</small>
-            <h3 class="fw-bold text-white mb-0" id="statTotal">0</h3>
+    <!-- Ringkasan Statistik Ruangan (Grid 2x2 di Mobile, 1x4 di Desktop) -->
+    <div class="container-fluid px-3 px-md-4 py-2 py-md-3">
+      <div class="row g-2 g-md-3 text-center mb-2 mb-md-3">
+        <div class="col-6 col-md-3">
+          <div class="stat-box bg-secondary bg-opacity-10">
+            <div class="text-secondary text-uppercase fw-bold stat-label">Total Siswa</div>
+            <h4 class="fw-bold text-white mb-0 mt-1" id="statTotal">0</h4>
           </div>
         </div>
-        <div class="col-3">
-          <div class="card bg-success bg-opacity-10 border-0 p-2 rounded-3">
-            <small class="text-success text-uppercase fw-bold" style="font-size: 0.75rem;">Mengerjakan</small>
-            <h3 class="fw-bold text-success mb-0" id="statAktif">0</h3>
+        <div class="col-6 col-md-3">
+          <div class="stat-box bg-success bg-opacity-10">
+            <div class="text-success text-uppercase fw-bold stat-label">Mengerjakan</div>
+            <h4 class="fw-bold text-success mb-0 mt-1" id="statAktif">0</h4>
           </div>
         </div>
-        <div class="col-3">
-          <div class="card bg-danger bg-opacity-10 border-0 p-2 rounded-3">
-            <small class="text-danger text-uppercase fw-bold" style="font-size: 0.75rem;">Layar Terkunci</small>
-            <h3 class="fw-bold text-danger mb-0" id="statKunci">0</h3>
+        <div class="col-6 col-md-3">
+          <div class="stat-box bg-danger bg-opacity-10">
+            <div class="text-danger text-uppercase fw-bold stat-label">Layar Terkunci</div>
+            <h4 class="fw-bold text-danger mb-0 mt-1" id="statKunci">0</h4>
           </div>
         </div>
-        <div class="col-3">
-          <div class="card bg-info bg-opacity-10 border-0 p-2 rounded-3">
-            <small class="text-info text-uppercase fw-bold" style="font-size: 0.75rem;">Selesai Sah</small>
-            <h3 class="fw-bold text-info mb-0" id="statSelesai">0</h3>
+        <div class="col-6 col-md-3">
+          <div class="stat-box bg-info bg-opacity-10">
+            <div class="text-info text-uppercase fw-bold stat-label">Selesai Sah</div>
+            <h4 class="fw-bold text-info mb-0 mt-1" id="statSelesai">0</h4>
           </div>
         </div>
       </div>
 
-      <!-- Kartu Siswa (Grid Responsif Proyektor) -->
-      <div class="row g-3" id="siswaGrid">
+      <!-- Kartu Peserta Ujian -->
+      <div class="row g-2 g-md-3 pb-3" id="siswaGrid">
         <!-- Disuntikkan Otomatis oleh JavaScript -->
       </div>
     </div>
 
     <!-- Running Log Feed di Bawah Layar -->
-    <footer class="ticker-bar mt-auto d-flex align-items-center gap-3">
-      <span class="badge bg-danger text-uppercase fw-bold px-2 py-1"><i class="bi bi-radar me-1"></i>Live Log</span>
+    <footer class="ticker-bar mt-auto d-flex align-items-center gap-2">
+      <span class="badge bg-danger text-uppercase fw-bold px-2 py-1" style="font-size: 0.68rem;"><i class="bi bi-radar me-1"></i>Live</span>
       <div class="overflow-hidden flex-grow-1 text-truncate text-secondary" id="liveTickerText">
         Menunggu sinyal aktivitas peserta...
       </div>
@@ -200,7 +255,7 @@
 
   <script>
     // ==========================================================
-    // TEMPELKAN URL APPS SCRIPT ANDA DI SINI
+    // URL BACKEND GOOGLE APPS SCRIPT
     // ==========================================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec";
 
@@ -239,7 +294,6 @@
         return;
       }
 
-      // Verifikasi awal ke Apps Script
       try {
         const url = `${SCRIPT_URL}?action=getMonitoring&ruang=${encodeURIComponent(ruang)}&token=${encodeURIComponent(pass)}`;
         const response = await fetch(url);
@@ -256,7 +310,6 @@
 
           renderMonitoring(result);
 
-          // Mulai sinkronisasi berkala tiap 5 detik
           if (pollInterval) clearInterval(pollInterval);
           pollInterval = setInterval(fetchUpdateRuangan, 5000);
         } else {
@@ -304,40 +357,40 @@
         if (s.status === "Selesai") {
           cntSelesai++;
           cardClass = "status-selesai";
-          statusBadge = '<span class="badge bg-secondary">Selesai</span>';
+          statusBadge = '<span class="badge bg-secondary" style="font-size: 0.7rem;">Selesai</span>';
         } else if (s.status === "Terkunci" || s.pelanggaran >= maxV) {
           cntKunci++;
           cardClass = "status-terkunci";
           badgeClass = "badge-lock";
-          statusBadge = '<span class="badge bg-danger">TERKUNCI</span>';
+          statusBadge = '<span class="badge bg-danger" style="font-size: 0.7rem;">TERKUNCI</span>';
         } else if (s.pelanggaran > 0) {
           cntAktif++;
           cardClass = "status-warning";
           badgeClass = "badge-warn";
-          statusBadge = '<span class="badge bg-warning text-dark">Waspada</span>';
+          statusBadge = '<span class="badge bg-warning text-dark" style="font-size: 0.7rem;">Waspada</span>';
         } else if (s.status === "Mengerjakan") {
           cntAktif++;
-          statusBadge = '<span class="badge bg-success">Aktif</span>';
+          statusBadge = '<span class="badge bg-success" style="font-size: 0.7rem;">Aktif</span>';
         } else {
-          statusBadge = '<span class="badge bg-dark text-secondary border border-secondary">Belum Masuk</span>';
+          statusBadge = '<span class="badge bg-dark text-secondary border border-secondary" style="font-size: 0.7rem;">Belum Masuk</span>';
         }
 
         const col = document.createElement("div");
-        col.className = "col-xl-3 col-lg-4 col-md-6";
+        col.className = "col-12 col-sm-6 col-lg-4 col-xl-3";
         col.innerHTML = `
           <div class="card-siswa ${cardClass}">
-            <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
               <div class="text-truncate me-2">
-                <h6 class="fw-bold mb-0 text-white text-truncate" title="${s.nama}">${s.nama}</h6>
-                <small class="text-secondary">Kelas: ${s.kelas}</small>
+                <h6 class="fw-bold mb-0 text-white text-truncate" title="${s.nama}" style="font-size: 0.95rem;">${s.nama}</h6>
+                <small class="text-secondary" style="font-size: 0.75rem;">Kelas: ${s.kelas}</small>
               </div>
               <div class="v-badge ${badgeClass}" title="Total Pelanggaran">
                 ${s.pelanggaran}
               </div>
             </div>
-            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary border-opacity-25">
+            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-secondary border-opacity-25">
               ${statusBadge}
-              <small class="text-secondary text-truncate ms-2" style="font-size: 0.75rem;">
+              <small class="text-secondary text-truncate ms-2" style="font-size: 0.72rem;">
                 ${s.aktivitasTerakhir}
               </small>
             </div>
@@ -363,7 +416,7 @@
     }
 
     function keluarDashboard() {
-      if (confirm("Tutup dasbor pengawasan proyektor?")) {
+      if (confirm("Tutup dasbor pengawasan?")) {
         if (pollInterval) clearInterval(pollInterval);
         document.getElementById("dashSection").classList.add("d-none");
         document.getElementById("gateSection").classList.remove("d-none");
