@@ -455,16 +455,26 @@
       return;
     }
 
+    // 1. Cek State Lokal Terlebih Dahulu
+    const localKey = `cbt_${nama}_${ujianTerpilih.mapel}`;
+    const localDone = localStorage.getItem(`${localKey}_done`) === "true";
+    const localV = parseInt(localStorage.getItem(`${localKey}_v`) || "0", 10);
+    const localLock = localStorage.getItem(`${localKey}_lock`) === "true";
+
+    if (localDone) {
+      alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini. Akses tidak dapat diulang.");
+      return;
+    }
+
     btnSubmit.disabled = true;
     const originalBtnText = btnSubmit.innerHTML;
-    btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Memeriksa sesi...`;
+    btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Memeriksa status sesi...`;
 
-    let sessionRecovery = {
-      isResumed: false,
-      totalPelanggaran: 0,
-      isLocked: false
-    };
+    let finalPelanggaran = localV;
+    let finalLock = localLock;
+    let isResumed = localV > 0 || localLock;
 
+    // 2. Cek Riwayat Server Google Sheets
     try {
       const checkUrl = `${SCRIPT_URL}?action=checkSession&nama=${encodeURIComponent(nama)}&mapel=${encodeURIComponent(ujianTerpilih.mapel)}`;
       const res = await fetch(checkUrl);
@@ -474,35 +484,24 @@
         const s = data.session;
 
         if (s.isCompleted) {
-          alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini. Akses tidak dapat diulang.");
+          alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini dan jawaban telah dikirim.");
+          localStorage.setItem(`${localKey}_done`, "true");
           btnSubmit.disabled = false;
           btnSubmit.innerHTML = originalBtnText;
           return;
         }
 
         if (s.hasSession) {
-          sessionRecovery.isResumed = true;
-          sessionRecovery.totalPelanggaran = s.totalPelanggaran;
-          sessionRecovery.isLocked = s.isLocked;
+          isResumed = true;
+          finalPelanggaran = Math.max(localV, s.totalPelanggaran);
+          finalLock = s.isLocked || localLock;
         }
       }
-    } catch (e) {
-      console.warn("Koneksi verifikasi server terhambat, memeriksa cache lokal:", e);
-      const localDone = localStorage.getItem(`exam_done_${nama}_${ujianTerpilih.mapel}`);
-      if (localDone === "true") {
-        alert("Ujian ini sudah diselesaikan sebelumnya.");
-        btnSubmit.disabled = false;
-        btnSubmit.innerHTML = originalBtnText;
-        return;
-      }
-      const localV = localStorage.getItem(`exam_v_${nama}_${ujianTerpilih.mapel}`);
-      if (localV !== null) {
-        sessionRecovery.isResumed = true;
-        sessionRecovery.totalPelanggaran = parseInt(localV, 10);
-        sessionRecovery.isLocked = localStorage.getItem(`exam_lock_${nama}_${ujianTerpilih.mapel}`) === "true";
-      }
+    } catch (err) {
+      console.warn("Koneksi server terhambat, menggunakan data cache lokal:", err);
     }
 
+    // 3. Simpan ke sessionStorage & localStorage
     sessionStorage.setItem("exam_ruang", ruang);
     sessionStorage.setItem("exam_kelas", kelas);
     sessionStorage.setItem("exam_nama", nama);
@@ -513,10 +512,13 @@
     sessionStorage.setItem("exam_token_reset", configData.tokenResetPengawas);
     sessionStorage.setItem("exam_max_violation", configData.batasPelanggaran);
 
-    sessionStorage.setItem("exam_pelanggaran", sessionRecovery.totalPelanggaran.toString());
-    sessionStorage.setItem("exam_is_locked", sessionRecovery.isLocked ? "true" : "false");
-    sessionStorage.setItem("exam_is_resumed", sessionRecovery.isResumed ? "true" : "false");
+    sessionStorage.setItem("exam_pelanggaran", finalPelanggaran.toString());
+    sessionStorage.setItem("exam_is_locked", finalLock ? "true" : "false");
+    sessionStorage.setItem("exam_is_resumed", isResumed ? "true" : "false");
     sessionStorage.setItem("exam_script_url", SCRIPT_URL);
+
+    localStorage.setItem(`${localKey}_v`, finalPelanggaran.toString());
+    localStorage.setItem(`${localKey}_lock`, finalLock ? "true" : "false");
 
     window.location.href = "exam.html";
   }
