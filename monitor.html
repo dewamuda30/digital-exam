@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Proctoring Monitor</title>
+
+  <!-- Bootstrap 5.3 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #070d18;
+      --panel-navy: #0f1c2e;
+      --card-navy: #182a44;
+      --accent-blue: #3b82f6;
+      --danger-red: #ef4444;
+      --warning-yellow: #f59e0b;
+      --success-green: #10b981;
+      --text-main: #f8fafc;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    /* GATE MODAL */
+    .login-card {
+      max-width: 420px;
+      background: var(--panel-navy);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1.2rem;
+    }
+
+    /* PROYEKSI HEADER */
+    .proyektor-nav {
+      background: var(--panel-navy);
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+      padding: 14px 24px;
+    }
+
+    /* KARTU SISWA */
+    .card-siswa {
+      background-color: var(--panel-navy);
+      border: 2px solid rgba(255, 255, 255, 0.06);
+      border-radius: 1rem;
+      padding: 16px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .card-siswa.status-terkunci {
+      border-color: var(--danger-red);
+      background: linear-gradient(145deg, var(--panel-navy), #2d1217);
+      animation: pulse-red 2s infinite;
+    }
+
+    .card-siswa.status-warning {
+      border-color: var(--warning-yellow);
+    }
+
+    .card-siswa.status-selesai {
+      opacity: 0.65;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .v-badge {
+      font-size: 1.4rem;
+      font-weight: 800;
+      min-width: 44px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+    }
+
+    .badge-zero { background: rgba(16, 185, 129, 0.2); color: var(--success-green); border: 1px solid var(--success-green); }
+    .badge-warn { background: rgba(245, 158, 11, 0.2); color: var(--warning-yellow); border: 1px solid var(--warning-yellow); }
+    .badge-lock { background: var(--danger-red); color: #fff; }
+
+    /* RUNNING FEED / TICKER */
+    .ticker-bar {
+      background: #0a1322;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 20px;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. LOGIN GATE KHUSUS PENGAWAS RUANG -->
+  <div id="gateSection" class="d-flex align-items-center justify-content-center min-vh-100 p-3">
+    <div class="card login-card w-100 p-4 shadow-lg">
+      <div class="text-center mb-4">
+        <div class="display-5 text-primary mb-2"><i class="bi bi-display"></i></div>
+        <h4 class="fw-bold mb-1">Dasbor Pengawas Ruang</h4>
+        <p class="text-muted small">Hubungkan ke proyektor untuk pemantauan ruangan.</p>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label small fw-semibold text-light">Pilih Ruang Ujian:</label>
+        <select id="selRuang" class="form-select bg-dark text-white border-secondary">
+          <option value="">-- Memuat Ruang... --</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label small fw-semibold text-light">Sandi Reset Pengawas:</label>
+        <input type="password" id="inputPassPengawas" class="form-control bg-dark text-white border-secondary text-center" placeholder="Sandi Pengawas" autocomplete="off">
+        <div id="loginErr" class="text-danger small mt-2 d-none text-center">Sandi tidak sesuai!</div>
+      </div>
+
+      <button class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" onclick="masukDashboard()">
+        <i class="bi bi-broadcast"></i> Mulai Tayangan Proyektor
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. DASHBOARD TAMPILAN PROYEKTOR -->
+  <div id="dashSection" class="d-none min-vh-100 d-flex flex-column">
+    
+    <!-- Navbar Header Proyektor -->
+    <header class="proyektor-nav d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-primary px-3 py-2 fs-6 fw-bold" id="badgeRoomTitle">RUANG --</span>
+        <div>
+          <h5 class="fw-bold mb-0 text-white">SISTEM PENGAWASAN KEJUJURAN ASESMEN</h5>
+          <small class="text-secondary">Peringatan: Setiap interupsi jendela tercatat real-time di layar depan.</small>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-4">
+        <div class="text-end">
+          <div class="text-secondary small">Waktu Sistem:</div>
+          <div class="fw-bold fs-5 text-info" id="clockText">--:--:--</div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="keluarDashboard()" title="Keluar">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Ringkasan Statistik Ruangan -->
+    <div class="container-fluid px-4 py-3">
+      <div class="row g-3 text-center mb-3">
+        <div class="col-3">
+          <div class="card bg-secondary bg-opacity-10 border-0 p-2 rounded-3">
+            <small class="text-secondary text-uppercase fw-bold" style="font-size: 0.75rem;">Total Siswa</small>
+            <h3 class="fw-bold text-white mb-0" id="statTotal">0</h3>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="card bg-success bg-opacity-10 border-0 p-2 rounded-3">
+            <small class="text-success text-uppercase fw-bold" style="font-size: 0.75rem;">Mengerjakan</small>
+            <h3 class="fw-bold text-success mb-0" id="statAktif">0</h3>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="card bg-danger bg-opacity-10 border-0 p-2 rounded-3">
+            <small class="text-danger text-uppercase fw-bold" style="font-size: 0.75rem;">Layar Terkunci</small>
+            <h3 class="fw-bold text-danger mb-0" id="statKunci">0</h3>
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="card bg-info bg-opacity-10 border-0 p-2 rounded-3">
+            <small class="text-info text-uppercase fw-bold" style="font-size: 0.75rem;">Selesai Sah</small>
+            <h3 class="fw-bold text-info mb-0" id="statSelesai">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kartu Siswa (Grid Responsif Proyektor) -->
+      <div class="row g-3" id="siswaGrid">
+        <!-- Disuntikkan Otomatis oleh JavaScript -->
+      </div>
+    </div>
+
+    <!-- Running Log Feed di Bawah Layar -->
+    <footer class="ticker-bar mt-auto d-flex align-items-center gap-3">
+      <span class="badge bg-danger text-uppercase fw-bold px-2 py-1"><i class="bi bi-radar me-1"></i>Live Log</span>
+      <div class="overflow-hidden flex-grow-1 text-truncate text-secondary" id="liveTickerText">
+        Menunggu sinyal aktivitas peserta...
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    // ==========================================================
+    // TEMPELKAN URL APPS SCRIPT ANDA DI SINI
+    // ==========================================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec";
+
+    let activeRoom = "";
+    let activeToken = "";
+    let pollInterval = null;
+
+    // Ambil daftar ruang unik saat halaman pertama dibuka
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const data = await res.json();
+        if (data.status === "success" && data.siswa) {
+          const uniqueRooms = [...new Set(data.siswa.map(s => s.ruang))].sort();
+          const sel = document.getElementById("selRuang");
+          sel.innerHTML = '<option value="">-- Pilih Ruang Ujian --</option>';
+          uniqueRooms.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r;
+            opt.textContent = r;
+            sel.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.error("Gagal inisialisasi ruang:", e);
+      }
+    });
+
+    async function masukDashboard() {
+      const ruang = document.getElementById("selRuang").value;
+      const pass = document.getElementById("inputPassPengawas").value.trim().toUpperCase();
+      const err = document.getElementById("loginErr");
+
+      if (!ruang || !pass) {
+        alert("Pilih ruang dan masukkan sandi pengawas!");
+        return;
+      }
+
+      // Verifikasi awal ke Apps Script
+      try {
+        const url = `${SCRIPT_URL}?action=getMonitoring&ruang=${encodeURIComponent(ruang)}&token=${encodeURIComponent(pass)}`;
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (result.status === "success") {
+          activeRoom = ruang;
+          activeToken = pass;
+          err.classList.add("d-none");
+
+          document.getElementById("gateSection").classList.add("d-none");
+          document.getElementById("dashSection").classList.remove("d-none");
+          document.getElementById("badgeRoomTitle").innerText = activeRoom.toUpperCase();
+
+          renderMonitoring(result);
+
+          // Mulai sinkronisasi berkala tiap 5 detik
+          if (pollInterval) clearInterval(pollInterval);
+          pollInterval = setInterval(fetchUpdateRuangan, 5000);
+        } else {
+          err.innerText = result.message || "Sandi Pengawas Salah!";
+          err.classList.remove("d-none");
+        }
+      } catch (errNet) {
+        alert("Koneksi gagal terhubung ke server.");
+      }
+    }
+
+    async function fetchUpdateRuangan() {
+      if (!activeRoom || !activeToken) return;
+      try {
+        const url = `${SCRIPT_URL}?action=getMonitoring&ruang=${encodeURIComponent(activeRoom)}&token=${encodeURIComponent(activeToken)}`;
+        const response = await fetch(url);
+        const result = await response.json();
+        if (result.status === "success") {
+          renderMonitoring(result);
+        }
+      } catch (e) {
+        console.warn("Polling terhambat:", e);
+      }
+    }
+
+    function renderMonitoring(payload) {
+      document.getElementById("clockText").innerText = payload.timestamp || "--:--:--";
+      const peserta = payload.data.peserta || [];
+      const feeds = payload.data.liveFeed || [];
+      const maxV = payload.maxPelanggaran || 3;
+
+      let cntTotal = peserta.length;
+      let cntAktif = 0;
+      let cntKunci = 0;
+      let cntSelesai = 0;
+
+      const grid = document.getElementById("siswaGrid");
+      grid.innerHTML = "";
+
+      peserta.forEach(s => {
+        let cardClass = "";
+        let badgeClass = "badge-zero";
+        let statusBadge = "";
+
+        if (s.status === "Selesai") {
+          cntSelesai++;
+          cardClass = "status-selesai";
+          statusBadge = '<span class="badge bg-secondary">Selesai</span>';
+        } else if (s.status === "Terkunci" || s.pelanggaran >= maxV) {
+          cntKunci++;
+          cardClass = "status-terkunci";
+          badgeClass = "badge-lock";
+          statusBadge = '<span class="badge bg-danger">TERKUNCI</span>';
+        } else if (s.pelanggaran > 0) {
+          cntAktif++;
+          cardClass = "status-warning";
+          badgeClass = "badge-warn";
+          statusBadge = '<span class="badge bg-warning text-dark">Waspada</span>';
+        } else if (s.status === "Mengerjakan") {
+          cntAktif++;
+          statusBadge = '<span class="badge bg-success">Aktif</span>';
+        } else {
+          statusBadge = '<span class="badge bg-dark text-secondary border border-secondary">Belum Masuk</span>';
+        }
+
+        const col = document.createElement("div");
+        col.className = "col-xl-3 col-lg-4 col-md-6";
+        col.innerHTML = `
+          <div class="card-siswa ${cardClass}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="text-truncate me-2">
+                <h6 class="fw-bold mb-0 text-white text-truncate" title="${s.nama}">${s.nama}</h6>
+                <small class="text-secondary">Kelas: ${s.kelas}</small>
+              </div>
+              <div class="v-badge ${badgeClass}" title="Total Pelanggaran">
+                ${s.pelanggaran}
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary border-opacity-25">
+              ${statusBadge}
+              <small class="text-secondary text-truncate ms-2" style="font-size: 0.75rem;">
+                ${s.aktivitasTerakhir}
+              </small>
+            </div>
+          </div>
+        `;
+        grid.appendChild(col);
+      });
+
+      document.getElementById("statTotal").innerText = cntTotal;
+      document.getElementById("statAktif").innerText = cntAktif;
+      document.getElementById("statKunci").innerText = cntKunci;
+      document.getElementById("statSelesai").innerText = cntSelesai;
+
+      // Update Ticker Log Terbaru
+      if (feeds.length > 0) {
+        const f0 = feeds[0];
+        document.getElementById("liveTickerText").innerHTML = `
+          <span class="text-info fw-bold">[${f0.waktu}]</span> 
+          <span class="text-white">${f0.nama} (${f0.kelas})</span>: 
+          <span class="${f0.pelanggaran >= maxV ? 'text-danger fw-bold' : 'text-warning'}">${f0.aktivitas} (Ke-${f0.pelanggaran})</span>
+        `;
+      }
+    }
+
+    function keluarDashboard() {
+      if (confirm("Tutup dasbor pengawasan proyektor?")) {
+        if (pollInterval) clearInterval(pollInterval);
+        document.getElementById("dashSection").classList.add("d-none");
+        document.getElementById("gateSection").classList.remove("d-none");
+        document.getElementById("inputPassPengawas").value = "";
+      }
+    }
+  </script>
+</body>
+</html>
