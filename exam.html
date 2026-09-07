@@ -2,9 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Asesmen Digital</title>
-  <link id="appFavicon" rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Ruang Ujian - Digital Exam Portal</title>
 
   <!-- Bootstrap 5.3 & Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -17,77 +16,107 @@
       --navy-accent: #415a77;
       --bg-slate: #f8fafc;
       --white: #ffffff;
+      --danger: #dc2626;
       --border-color: #e2e8f0;
     }
 
-    body {
-      background-color: var(--bg-slate);
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #334155;
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
-    .card-portal {
-      width: 100%;
-      max-width: 480px;
-      background-color: var(--white);
-      border: 1px solid var(--border-color);
-      border-radius: 1.25rem;
-      box-shadow: 0 20px 40px -15px rgba(13, 27, 42, 0.15), 0 0 15px rgba(0, 0, 0, 0.03);
-      position: relative;
-    }
-
-    .banner-wrapper {
-      position: relative;
-      width: 100%;
-    }
-
-    .banner-container {
-      width: 100%;
-      height: 130px;
-      background-color: var(--primary-navy);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
       overflow: hidden;
-      border-radius: 1.25rem 1.25rem 0 0;
+      background-color: var(--bg-slate);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     }
 
-    .banner-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .logo-badge {
-      width: 84px;
-      height: 84px;
-      border-radius: 50%;
-      background: var(--white);
-      border: 4px solid var(--white);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-      position: absolute;
-      bottom: -42px;
-      left: 50%;
-      transform: translateX(-50%);
+    body {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      padding: 6px;
+      flex-direction: column;
     }
 
-    .logo-badge img {
+    /* NAVBAR */
+    .navbar-exam {
+      background-color: var(--primary-navy);
+      color: var(--white);
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--navy-accent);
+      flex-shrink: 0;
+      z-index: 100;
+      min-height: 52px;
+    }
+
+    .badge-mapel {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-weight: 600;
+      max-width: 150px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+      vertical-align: middle;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+    }
+
+    @media (min-width: 768px) {
+      .navbar-exam {
+        padding: 10px 20px;
+        min-height: 60px;
+      }
+      .badge-mapel {
+        max-width: 350px;
+        font-size: 0.9rem;
+        padding: 6px 14px;
+      }
+    }
+
+    /* KONTAINER IFRAME SOAL */
+    .frame-wrapper {
+      flex: 1 1 0%;
+      min-height: 0;
+      width: 100%;
+      position: relative;
+      background-color: #f1f5f9;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    iframe {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      border: 0;
+      display: block;
+      background-color: var(--white);
     }
 
-    .text-navy {
-      color: var(--primary-navy) !important;
+    /* TOMBOL AKSI */
+    .btn-finish {
+      background-color: #059669;
+      color: var(--white);
+      font-weight: 600;
+      font-size: 0.85rem;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .btn-finish:hover, .btn-finish:active {
+      background-color: #047857;
+      color: var(--white);
     }
 
     .btn-navy {
@@ -97,432 +126,481 @@
       border: none;
       padding: 0.75rem 1.25rem;
       border-radius: 0.65rem;
-      transition: all 0.2s ease-in-out;
+      transition: all 0.2s;
     }
 
-    .btn-navy:hover:not(:disabled) {
+    .btn-navy:hover, .btn-navy:active {
       background-color: var(--navy-surface);
       color: var(--white);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(13, 27, 42, 0.2);
     }
 
-    .btn-navy:active:not(:disabled) {
-      transform: translateY(0);
+    /* OVERLAY PENGUNCI LAYAR */
+    .lock-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background-color: rgba(13, 27, 42, 0.98);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
     }
 
-    .form-control:focus, .form-select:focus {
-      border-color: var(--navy-accent);
-      box-shadow: 0 0 0 0.25rem rgba(13, 27, 42, 0.12);
+    .lock-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--white);
+      border-radius: 1.25rem;
+      padding: 26px 22px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      margin: auto;
     }
 
-    .step-tag {
-      font-size: 0.75rem;
-      text-transform: uppercase;
+    @media (min-width: 768px) {
+      .lock-card {
+        padding: 32px 28px;
+      }
+    }
+
+    .form-control-secure {
+      font-size: 16px !important;
       letter-spacing: 0.05em;
-      font-weight: 700;
-      color: var(--navy-accent);
     }
   </style>
 </head>
-<body class="p-3 p-md-4">
+<body oncontextmenu="return false;">
 
-<div class="card card-portal">
-  
-  <div class="banner-wrapper">
-    <div class="banner-container">
-      <img id="bannerImg" class="banner-img d-none" alt="Banner Ujian">
+  <!-- Header Navigasi Ujian -->
+  <header class="navbar-exam shadow-sm">
+    <div class="d-flex align-items-center gap-2 overflow-hidden">
+      <span class="badge-mapel" id="navMapel">
+        <i class="bi bi-journal-text me-1"></i><span id="navMapelText">Ujian</span>
+      </span>
+      
+      <div class="small d-none d-md-block text-light opacity-75 text-truncate" style="max-width: 250px;">
+        <span id="navRuang">-</span> &bull; <span id="navKelas">-</span> &bull; <strong id="navNama" class="text-white">-</strong>
+      </div>
     </div>
-    
-    <div class="logo-badge">
-      <img id="logoImg" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>" alt="Logo">
+
+    <div class="d-flex align-items-center gap-2">
+      <!-- Badge Pelanggaran -->
+      <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 small d-flex align-items-center gap-1" style="font-size: 0.75rem;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span><strong id="navPelanggaran">0</strong>x</span>
+      </span>
+
+      <!-- Tombol Selesai Ujian -->
+      <button class="btn-finish d-flex align-items-center gap-1" onclick="bukaModalSelesai()">
+        <i class="bi bi-check2-circle"></i>
+        <span>Selesai Ujian</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Kontainer Iframe Soal Google Form -->
+  <main class="frame-wrapper" id="frameWrapper">
+    <iframe id="examIframe" src="about:blank" allow="autoplay">Memuat lembar soal...</iframe>
+  </main>
+
+  <!-- 1. OVERLAY INISIALISASI (Awal Masuk Layar Penuh) -->
+  <div id="overlayInit" class="lock-overlay">
+    <div class="lock-card">
+      <div class="mb-3 text-navy">
+        <i class="bi bi-arrows-fullscreen display-5 text-primary"></i>
+      </div>
+      <h5 class="fw-bold text-navy mb-2" id="initTitle">Masuk Ruang Ujian</h5>
+      <p class="text-muted small mb-4" id="initDesc">
+        Sistem akan mengunci layar Anda ke mode Layar Penuh (*Fullscreen*). Pastikan Anda tidak keluar layar sampai ujian selesai.
+      </p>
+      <button class="btn btn-navy w-100 py-2 d-flex align-items-center justify-content-center gap-2" onclick="masukFullscreenAwal()">
+        <i class="bi bi-fullscreen"></i>
+        <span>Mulai Sekarang</span>
+      </button>
     </div>
   </div>
 
-  <div class="card-body p-4 p-md-5 pt-5">
-    
-    <div class="text-center mt-3 mb-4">
-      <h4 class="fw-bold text-navy mb-1" id="portalTitle">DIGITAL EXAM PORTAL</h4>
-      <p class="text-muted small mb-0" id="portalSubtitle">Memverifikasi kesiapan sistem...</p>
-    </div>
-
-    <div id="sectionLoading" class="text-center py-4">
-      <div class="spinner-border text-navy mb-2" role="status"></div>
-      <p class="small text-muted mb-0">Menghubungkan ke pusat server ujian...</p>
-    </div>
-
-    <div id="sectionClosed" class="alert alert-warning text-center small fw-semibold d-none border-warning-subtle py-3" role="alert">
-      <i class="bi bi-exclamation-octagon-fill d-block fs-3 mb-2 text-warning"></i>
-      <span id="txtClosedMsg">Ujian belum dibuka oleh panitia.</span>
-    </div>
-
-    <!-- TAHAP 1: Input Token Sesi -->
-    <div id="sectionTokenGate" class="d-none">
-      <div class="border rounded-3 p-3 bg-light mb-3 text-center">
-        <span class="step-tag d-block mb-1">Tahap 1 dari 2</span>
-        <h6 class="fw-bold text-navy mb-0">Masukkan Token Ujian</h6>
-        <p class="text-muted small mb-0">Mintalah token sesi kepada pengawas yang bertugas.</p>
+  <!-- 2. OVERLAY INTERUPSI (Keluar Layar / Tekan Esc < Batas) -->
+  <div id="overlayInterupsi" class="lock-overlay d-none">
+    <div class="lock-card">
+      <div class="mb-2">
+        <i class="bi bi-exclamation-octagon-fill display-5 text-danger"></i>
       </div>
-
+      <h5 class="fw-bold text-danger mb-1">TERDETEKSI KELUAR!</h5>
+      <p class="text-muted small mb-3">
+        Layar ujian dikunci karena Anda mencoba meninggalkan layar penuh atau berpindah aplikasi. Kejadian ini dicatat di sistem pengawas.
+      </p>
       <div class="mb-3">
-        <div class="input-group">
-          <span class="input-group-text bg-white border-end-0 text-navy"><i class="bi bi-key-fill"></i></span>
-          <input type="text" id="inputTokenAwal" class="form-control border-start-0 text-uppercase fw-bold text-center letter-spacing-1" placeholder="TOKEN SESI" autocomplete="off">
-        </div>
-        <div id="tokenErrorMsg" class="text-danger small fw-semibold mt-1 d-none text-center">
-          <i class="bi bi-x-circle me-1"></i>Token salah atau tidak sesuai!
-        </div>
+        <label class="form-label small fw-semibold text-navy">Masukkan Token Ujian untuk Melanjutkan</label>
+        <input type="text" id="inputTokenPulih" class="form-control form-control-secure text-uppercase text-center fw-bold py-2" placeholder="TOKEN SESI" autocomplete="off" onkeydown="if(event.key==='Enter') pulihkanFullscreen()">
+        <div id="errTokenPulih" class="text-danger small mt-1 d-none">Token salah!</div>
       </div>
-
-      <button type="button" onclick="verifikasiTokenAwal()" class="btn btn-navy w-100 d-flex align-items-center justify-content-center gap-2">
-        <span>Buka Akses Identitas</span>
-        <i class="bi bi-unlock-fill"></i>
+      <button class="btn btn-navy w-100 py-2" onclick="pulihkanFullscreen()">
+        <i class="bi bi-arrows-fullscreen me-1"></i> Kembali ke Layar Penuh
       </button>
     </div>
-
-    <!-- TAHAP 2: Pengisian Identitas & Pemilihan Ujian -->
-    <form id="sectionIdentity" class="d-none" onsubmit="event.preventDefault(); persiapkanMulaiUjian();">
-      <div class="border rounded-3 p-3 bg-light mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <span class="step-tag">Tahap 2 dari 2</span>
-          <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Token Terverifikasi</span>
-        </div>
-        <h6 class="fw-bold text-navy mb-0">Identitas & Pemilihan Soal</h6>
-      </div>
-
-      <!-- 1. Dropdown Ruang -->
-      <div class="mb-3">
-        <label for="selectRuang" class="form-label fw-semibold text-navy small">
-          <i class="bi bi-geo-alt-fill me-1"></i> 1. Ruang Ujian
-        </label>
-        <select id="selectRuang" class="form-select" onchange="onRuangSelected()" required>
-          <option value="">-- Pilih Ruang --</option>
-        </select>
-      </div>
-
-      <!-- 2. Dropdown Kelas -->
-      <div class="mb-3">
-        <label for="selectKelas" class="form-label fw-semibold text-navy small">
-          <i class="bi bi-diagram-3-fill me-1"></i> 2. Kelas
-        </label>
-        <select id="selectKelas" class="form-select" onchange="onKelasSelected()" disabled required>
-          <option value="">Pilih ruang terlebih dahulu</option>
-        </select>
-      </div>
-
-      <!-- 3. Dropdown Nama Siswa -->
-      <div class="mb-3">
-        <label for="selectNama" class="form-label fw-semibold text-navy small">
-          <i class="bi bi-person-fill me-1"></i> 3. Nama Lengkap Siswa
-        </label>
-        <select id="selectNama" class="form-select" disabled required>
-          <option value="">Pilih kelas terlebih dahulu</option>
-        </select>
-      </div>
-
-      <!-- 4. Dropdown Mata Pelajaran / Ujian Aktif -->
-      <div class="mb-4">
-        <label for="selectUjian" class="form-label fw-semibold text-navy small">
-          <i class="bi bi-journal-bookmark-fill me-1"></i> 4. Mata Pelajaran / Ujian Aktif
-        </label>
-        <select id="selectUjian" class="form-select" disabled required>
-          <option value="">Pilih kelas terlebih dahulu</option>
-        </select>
-        <div id="ujianHelpText" class="form-text small text-muted d-none">
-          Memuat daftar ujian yang sedang dibuka untuk kelas Anda.
-        </div>
-      </div>
-
-      <button type="submit" id="btnSubmitMulai" class="btn btn-navy w-100 d-flex align-items-center justify-content-center gap-2">
-        <span>Masuk Layar Penuh & Mulai Ujian</span>
-        <i class="bi bi-arrows-fullscreen"></i>
-      </button>
-    </form>
-
   </div>
-</div>
 
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec";
+  <!-- 3. OVERLAY KUNCI TOTAL (Pelanggaran >= Batas Toleransi) -->
+  <div id="overlayBlokirTotal" class="lock-overlay d-none">
+    <div class="lock-card border border-danger">
+      <div class="mb-2">
+        <i class="bi bi-shield-x display-4 text-danger"></i>
+      </div>
+      <h5 class="fw-bold text-danger mb-1">UJIAN DIBLOKIR!</h5>
+      <p class="text-muted small mb-3">
+        Anda telah melampaui batas toleransi pelanggaran. Silakan panggil <strong>pengawas ruang</strong> untuk membuka kembali akses ujian Anda.
+      </p>
+      <div class="mb-3 text-start bg-light p-3 rounded-3 border">
+        <label class="form-label small fw-bold text-navy mb-1"><i class="bi bi-person-lock me-1"></i>Sandi Buka Pengawas</label>
+        <input type="password" id="inputTokenGuru" class="form-control form-control-secure text-center fw-bold py-2" placeholder="Sandi Reset Pengawas" autocomplete="new-password" value="" onkeydown="if(event.key==='Enter') bukaKunciPengawas()">
+        <div id="errTokenGuru" class="text-danger small mt-1 d-none">Sandi reset salah!</div>
+      </div>
+      <button class="btn btn-danger w-100 py-2 fw-semibold" onclick="bukaKunciPengawas()">
+        <i class="bi bi-unlock-fill me-1"></i> Buka Kunci Siswa
+      </button>
+    </div>
+  </div>
 
-  let configData = {};
-  let ujianAktifList = [];
-  let masterSiswaList = [];
-  let currentAvailableUjian = [];
+  <!-- 4. MODAL KONFIRMASI SELESAI UJIAN -->
+  <div class="modal fade" id="modalSelesai" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content rounded-4 border-0 p-2 shadow">
+        <div class="modal-header border-0 pb-0">
+          <h6 class="modal-title fw-bold text-navy"><i class="bi bi-check-circle-fill text-success me-2"></i>Akhiri Ujian</h6>
+        </div>
+        <div class="modal-body text-secondary small py-2">
+          <p class="mb-2">Pastikan Anda sudah menekan tombol <strong>KIRIM (SUBMIT)</strong> di lembar soal Google Form.</p>
+          <div class="my-2">
+            <label class="form-label fw-bold text-navy small mb-1">Masukkan Token Ujian untuk Konfirmasi:</label>
+            <input type="text" id="inputTokenSelesai" class="form-control form-control-secure text-uppercase text-center fw-bold py-2" placeholder="TOKEN SESI" autocomplete="off" onkeydown="if(event.key==='Enter') verifikasiSelesaiUjian()">
+            <div id="errTokenSelesai" class="text-danger small mt-1 d-none">Token tidak sesuai!</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 d-flex gap-2">
+          <button type="button" class="btn btn-light flex-grow-1" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-navy flex-grow-1" onclick="verifikasiSelesaiUjian()">Selesai</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  window.addEventListener("DOMContentLoaded", async () => {
-    try {
-      const response = await fetch(SCRIPT_URL);
-      const res = await response.json();
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-      if (res.status !== "success") throw new Error(res.message);
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs5qDSNYwPoRfJi1pxJHTomEriFYetWJx3kOQ91ogjRbPncc5Ftoybd5icmoTdEOVUKg/exec";
 
-      configData = res.config;
-      ujianAktifList = res.ujianAktif || [];
-      masterSiswaList = res.siswa || [];
+    const ruangSiswa = sessionStorage.getItem("exam_ruang");
+    const kelasSiswa = sessionStorage.getItem("exam_kelas");
+    const namaSiswa = sessionStorage.getItem("exam_nama");
+    const mapelSiswa = sessionStorage.getItem("exam_mapel");
+    const linkForm = sessionStorage.getItem("exam_link_form");
+    const tokenUjian = (sessionStorage.getItem("exam_token") || "").trim().toUpperCase();
+    const tokenReset = (sessionStorage.getItem("exam_token_reset") || "").trim().toUpperCase();
+    const maxPelanggaran = parseInt(sessionStorage.getItem("exam_max_violation") || "3", 10);
+    let totalPelanggaran = parseInt(sessionStorage.getItem("exam_pelanggaran") || "0", 10);
+    const isResumed = sessionStorage.getItem("exam_is_resumed") === "true";
 
-      applyVisualAssets();
+    if (!namaSiswa || !kelasSiswa || !linkForm) {
+      alert("Akses tidak sah. Silakan login terlebih dahulu!");
+      window.location.replace("index.html");
+    }
 
-      document.getElementById("sectionLoading").classList.add("d-none");
+    const localKey = `cbt_${namaSiswa}_${mapelSiswa}`;
 
-      if (!configData.portalAktif) {
-        document.getElementById("txtClosedMsg").innerText = configData.pesanTutup || "Ujian sedang ditutup.";
-        document.getElementById("sectionClosed").classList.remove("d-none");
-        document.getElementById("portalSubtitle").innerText = "Akses Ditutup";
+    let isUnloading = false;
+    let isExitingLegally = false;
+    let lastViolationTime = 0;
+    let modalSelesaiInstance = null;
+
+    // DETEKSI AKSI TUTUP TAB / KELUAR PAKSA
+    window.addEventListener("beforeunload", (e) => {
+      isUnloading = true;
+      if (!isExitingLegally) {
+        totalPelanggaran++;
+        sessionStorage.setItem("exam_pelanggaran", totalPelanggaran);
+        localStorage.setItem(`${localKey}_v`, totalPelanggaran.toString());
+        kirimLog("Menutup Tab / Keluar Paksa", totalPelanggaran);
+
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("navMapelText").innerText = mapelSiswa || "Ujian";
+      document.getElementById("navRuang").innerText = ruangSiswa;
+      document.getElementById("navKelas").innerText = kelasSiswa;
+      document.getElementById("navNama").innerText = namaSiswa;
+      document.getElementById("navPelanggaran").innerText = totalPelanggaran;
+      document.getElementById("examIframe").src = linkForm;
+      
+      const modalEl = document.getElementById("modalSelesai");
+      if (modalEl && typeof bootstrap !== "undefined") {
+        modalSelesaiInstance = new bootstrap.Modal(modalEl);
+      }
+
+      // 1. KONDISI SUDAH TERKUNCI TOTAL SEBELUMNYA
+      if (sessionStorage.getItem("exam_is_locked") === "true" || totalPelanggaran >= maxPelanggaran) {
+        document.getElementById("overlayInit").classList.add("d-none");
+        kunciLayarTotal();
+      } 
+      // 2. KONDISI MELANJUTKAN SESI DENGAN REKAP PELANGGARAN SEBELUMNYA
+      else if (isResumed && totalPelanggaran > 0) {
+        document.getElementById("initTitle").innerText = "Lanjutkan Sesi Ujian";
+        document.getElementById("initDesc").innerHTML = 
+          `Anda terdeteksi melanjutkan sesi sebelumnya. Akumulasi pelanggaran saat ini: <strong>${totalPelanggaran}x</strong>. Masuk kembali ke Layar Penuh untuk melanjutkan pengerjaan soal.`;
+      }
+    });
+
+    function jalankanFullscreen(suksesCallback) {
+      const el = document.documentElement;
+      const requestFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+
+      if (requestFS) {
+        requestFS.call(el).then(() => {
+          if (suksesCallback) suksesCallback();
+        }).catch(() => {
+          if (suksesCallback) suksesCallback();
+        });
+      } else {
+        if (suksesCallback) suksesCallback();
+      }
+    }
+
+    function masukFullscreenAwal() {
+      jalankanFullscreen(() => {
+        document.getElementById("overlayInit").classList.add("d-none");
+        sessionStorage.setItem("exam_started", "true");
+
+        if (isResumed) {
+          kirimLog("Melanjutkan Ujian (Login Kembali Pasca Tutup Tab)", totalPelanggaran);
+        } else {
+          kirimLog("Masuk & Mulai Fullscreen", totalPelanggaran);
+        }
+      });
+    }
+
+    document.addEventListener("fullscreenchange", periksaStatusLayarPenuh);
+    document.addEventListener("webkitfullscreenchange", periksaStatusLayarPenuh);
+
+    function periksaStatusLayarPenuh() {
+      if (isUnloading || isExitingLegally) return;
+
+      const isFS = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!isFS) {
+        catatPelanggaran("Keluar Layar Penuh / Menekan Esc");
+      }
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (isUnloading || isExitingLegally) return;
+      if (document.visibilityState === "hidden") {
+        catatPelanggaran("Pindah Tab / Minimize Aplikasi");
+      }
+    });
+
+    window.addEventListener("blur", () => {
+      if (isUnloading || isExitingLegally) return;
+
+      setTimeout(() => {
+        if (document.activeElement && document.activeElement.tagName === "IFRAME") return;
+        if (document.hasFocus && document.hasFocus()) return;
+
+        catatPelanggaran("Beralih Aplikasi / Keluar Jendela");
+      }, 400);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" || e.keyCode === 27) {
+        catatPelanggaran("Mencoba Keluar / Menekan Esc");
         return;
       }
 
-      document.getElementById("portalSubtitle").innerText = "Silakan masukkan token sesi untuk memulai.";
-      document.getElementById("sectionTokenGate").classList.remove("d-none");
+      if (
+        (e.ctrlKey && ["c", "u", "v", "s", "a", "p", "w", "t", "r"].includes(e.key.toLowerCase())) ||
+        e.key === "F12" || e.key === "F11" || e.key === "F5"
+      ) {
+        e.preventDefault();
+        catatPelanggaran("Pintasan Terlarang (" + e.key + ")");
+      }
+    });
 
-    } catch (err) {
-      console.error("Gagal inisialisasi:", err);
-      document.getElementById("sectionLoading").innerHTML = 
-        `<div class="alert alert-danger small py-2 mb-0">Gagal terhubung ke database. Pastikan koneksi internet stabil.</div>`;
-    }
-  });
+    function catatPelanggaran(tipe) {
+      if (isUnloading || isExitingLegally) return;
 
-  function applyVisualAssets() {
-    if (configData.logoInstansi) {
-      document.getElementById("appFavicon").href = configData.logoInstansi;
-      document.getElementById("logoImg").src = configData.logoInstansi;
+      const now = Date.now();
+      if (now - lastViolationTime < 1200) return;
+      lastViolationTime = now;
+
+      totalPelanggaran++;
+      sessionStorage.setItem("exam_pelanggaran", totalPelanggaran);
+      localStorage.setItem(`${localKey}_v`, totalPelanggaran.toString());
+      document.getElementById("navPelanggaran").innerText = totalPelanggaran;
+
+      document.getElementById("frameWrapper").style.visibility = "hidden";
+
+      kirimLog(tipe, totalPelanggaran);
+
+      if (totalPelanggaran >= maxPelanggaran) {
+        kunciLayarTotal();
+      } else {
+        document.getElementById("overlayInterupsi").classList.remove("d-none");
+        document.getElementById("inputTokenPulih").value = "";
+        setTimeout(() => {
+          document.getElementById("inputTokenPulih").focus();
+        }, 200);
+      }
     }
-    if (configData.bannerUjian) {
-      const bannerImg = document.getElementById("bannerImg");
-      bannerImg.src = configData.bannerUjian;
-      bannerImg.onload = () => {
-        bannerImg.classList.remove("d-none");
+
+    function pulihkanFullscreen() {
+      const input = document.getElementById("inputTokenPulih").value.trim().toUpperCase();
+      const err = document.getElementById("errTokenPulih");
+
+      if (input === tokenUjian || (tokenReset !== "" && input === tokenReset)) {
+        err.classList.add("d-none");
+        document.getElementById("inputTokenPulih").value = "";
+        jalankanFullscreen(() => {
+          document.getElementById("overlayInterupsi").classList.add("d-none");
+          document.getElementById("frameWrapper").style.visibility = "visible";
+          kirimLog("Kembali Fullscreen (Token Valid)", totalPelanggaran);
+        });
+      } else {
+        err.classList.remove("d-none");
+      }
+    }
+
+    function kunciLayarTotal() {
+      sessionStorage.setItem("exam_is_locked", "true");
+      localStorage.setItem(`${localKey}_lock`, "true");
+      document.getElementById("overlayInterupsi").classList.add("d-none");
+      document.getElementById("overlayBlokirTotal").classList.remove("d-none");
+      document.getElementById("frameWrapper").style.visibility = "hidden";
+
+      const inputEl = document.getElementById("inputTokenGuru");
+      if (inputEl) inputEl.value = "";
+      const errEl = document.getElementById("errTokenGuru");
+      if (errEl) errEl.classList.add("d-none");
+
+      kirimLog("Layar Terkunci Total (Melebihi Batas)", totalPelanggaran);
+      setTimeout(() => {
+        if (inputEl) inputEl.focus();
+      }, 200);
+    }
+
+    function bukaKunciPengawas() {
+      const inputEl = document.getElementById("inputTokenGuru");
+      const input = inputEl.value.trim().toUpperCase();
+      const err = document.getElementById("errTokenGuru");
+
+      if (input === tokenReset && tokenReset !== "") {
+        err.classList.add("d-none");
+        inputEl.value = "";
+
+        sessionStorage.setItem("exam_is_locked", "false");
+        localStorage.setItem(`${localKey}_lock`, "false");
+        document.getElementById("navPelanggaran").innerText = totalPelanggaran;
+
+        jalankanFullscreen(() => {
+          document.getElementById("overlayBlokirTotal").classList.add("d-none");
+          document.getElementById("frameWrapper").style.visibility = "visible";
+          kirimLog("Dibuka Kembali oleh Pengawas (Akses Dipulihkan)", totalPelanggaran);
+        });
+      } else {
+        err.classList.remove("d-none");
+        inputEl.value = "";
+        inputEl.focus();
+      }
+    }
+
+    function bukaModalSelesai() {
+      document.getElementById("inputTokenSelesai").value = "";
+      document.getElementById("errTokenSelesai").classList.add("d-none");
+      if (modalSelesaiInstance) {
+        modalSelesaiInstance.show();
+      }
+      setTimeout(() => {
+        document.getElementById("inputTokenSelesai").focus();
+      }, 300);
+    }
+
+    function verifikasiSelesaiUjian() {
+      const input = document.getElementById("inputTokenSelesai").value.trim().toUpperCase();
+      const err = document.getElementById("errTokenSelesai");
+
+      const isValid = (tokenUjian !== "" && input === tokenUjian) || (tokenReset !== "" && input === tokenReset);
+
+      if (isValid) {
+        err.classList.add("d-none");
+        isExitingLegally = true;
+
+        sessionStorage.setItem("exam_completed", "true");
+        localStorage.setItem(`${localKey}_done`, "true");
+
+        try {
+          if (document.fullscreenElement || document.webkitFullscreenElement) {
+            if (document.exitFullscreen) {
+              document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+              document.webkitExitFullscreen();
+            }
+          }
+        } catch (fsErr) {
+          console.warn("Fullscreen exit error:", fsErr);
+        }
+
+        try {
+          kirimLog("Selesai Ujian & Keluar Sah", totalPelanggaran);
+        } catch (logErr) {
+          console.warn("Log error:", logErr);
+        }
+
+        setTimeout(() => {
+          window.location.href = "finish.html";
+        }, 150);
+
+      } else {
+        err.classList.remove("d-none");
+      }
+    }
+
+    function kirimLog(aktivitas, count) {
+      const targetUrl = sessionStorage.getItem("exam_script_url") || SCRIPT_URL;
+
+      if (!targetUrl || targetUrl.trim() === "" || targetUrl.includes("URL_GOOGLE_APPS_SCRIPT") || targetUrl.includes("contoh")) {
+        console.error("Gagal kirim log: SCRIPT_URL belum disetel!");
+        return;
+      }
+
+      const payload = {
+        mapel: mapelSiswa || "-",
+        ruang: ruangSiswa || "-",
+        kelas: kelasSiswa || "-",
+        nama: namaSiswa || "-",
+        aktivitas: aktivitas || "-",
+        totalPelanggaran: count !== undefined ? count : 0
       };
-    }
-  }
 
-  function verifikasiTokenAwal() {
-    const inputToken = document.getElementById("inputTokenAwal").value.trim().toUpperCase();
-    const tokenAsli = (configData.tokenUjian || "").trim().toUpperCase();
-    const errorBox = document.getElementById("tokenErrorMsg");
-
-    if (inputToken === tokenAsli && tokenAsli !== "") {
-      errorBox.classList.add("d-none");
-      document.getElementById("sectionTokenGate").classList.add("d-none");
-      document.getElementById("sectionIdentity").classList.remove("d-none");
-      document.getElementById("portalSubtitle").innerText = "Lengkapi identitas dan pilih ujian.";
-      populateDropdownRuang();
-    } else {
-      errorBox.classList.remove("d-none");
-    }
-  }
-
-  function populateDropdownRuang() {
-    const selectRuang = document.getElementById("selectRuang");
-    const uniqueRuang = [...new Set(masterSiswaList.map(s => s.ruang))].sort();
-
-    selectRuang.innerHTML = '<option value="">-- Pilih Ruang --</option>';
-    uniqueRuang.forEach(ruang => {
-      const opt = document.createElement("option");
-      opt.value = ruang;
-      opt.textContent = ruang;
-      selectRuang.appendChild(opt);
-    });
-  }
-
-  function onRuangSelected() {
-    const selectedRuang = document.getElementById("selectRuang").value;
-    const selectKelas = document.getElementById("selectKelas");
-    const selectNama = document.getElementById("selectNama");
-    const selectUjian = document.getElementById("selectUjian");
-    const ujianHelpText = document.getElementById("ujianHelpText");
-
-    selectKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-    selectNama.innerHTML = '<option value="">Pilih kelas terlebih dahulu</option>';
-    selectUjian.innerHTML = '<option value="">Pilih kelas terlebih dahulu</option>';
-    selectNama.disabled = true;
-    selectUjian.disabled = true;
-    ujianHelpText.classList.add("d-none");
-
-    if (!selectedRuang) {
-      selectKelas.disabled = true;
-      return;
-    }
-
-    const availableKelas = [...new Set(
-      masterSiswaList.filter(s => s.ruang === selectedRuang).map(s => s.kelas)
-    )].sort();
-
-    availableKelas.forEach(kelas => {
-      const opt = document.createElement("option");
-      opt.value = kelas;
-      opt.textContent = kelas;
-      selectKelas.appendChild(opt);
-    });
-
-    selectKelas.disabled = false;
-  }
-
-  function onKelasSelected() {
-    const selectedRuang = document.getElementById("selectRuang").value;
-    const selectedKelas = document.getElementById("selectKelas").value;
-    const selectNama = document.getElementById("selectNama");
-    const selectUjian = document.getElementById("selectUjian");
-    const ujianHelpText = document.getElementById("ujianHelpText");
-
-    selectNama.innerHTML = '<option value="">-- Pilih Nama Lengkap --</option>';
-    selectUjian.innerHTML = '<option value="">-- Pilih Mata Pelajaran --</option>';
-
-    if (!selectedKelas) {
-      selectNama.disabled = true;
-      selectUjian.disabled = true;
-      ujianHelpText.classList.add("d-none");
-      return;
-    }
-
-    const availableSiswa = masterSiswaList
-      .filter(s => s.ruang === selectedRuang && s.kelas === selectedKelas)
-      .sort((a, b) => a.nama.localeCompare(b.nama));
-
-    availableSiswa.forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = s.nama;
-      opt.dataset.nis = s.nis || "";
-      opt.textContent = s.nama;
-      selectNama.appendChild(opt);
-    });
-    selectNama.disabled = false;
-
-    const tingkatSiswa = extractTingkat(selectedKelas);
-    currentAvailableUjian = ujianAktifList.filter(u => {
-      if (!u.tingkatKelas || u.tingkatKelas.toUpperCase() === "SEMUA") return true;
-      const tingkatExam = extractTingkat(u.tingkatKelas);
-      return tingkatExam === tingkatSiswa || u.tingkatKelas.toUpperCase() === selectedKelas.toUpperCase();
-    });
-
-    if (currentAvailableUjian.length === 0) {
-      selectUjian.innerHTML = '<option value="">(Belum ada ujian aktif untuk kelas ini)</option>';
-      selectUjian.disabled = true;
-      ujianHelpText.classList.add("d-none");
-    } else {
-      currentAvailableUjian.forEach((u, index) => {
-        const opt = document.createElement("option");
-        opt.value = index;
-
-        let labelKelas = "";
-        if (u.tingkatKelas) {
-          const rawTingkat = u.tingkatKelas.toString().trim().replace(/^kelas\s*/i, "");
-          labelKelas = rawTingkat.toUpperCase() === "SEMUA" ? " (Semua Kelas)" : ` (Kelas ${rawTingkat})`;
-        }
-
-        opt.textContent = `${u.mapel}${labelKelas}`;
-        selectUjian.appendChild(opt);
+      fetch(targetUrl, {
+        method: "POST",
+        mode: "no-cors",
+        keepalive: true,
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        console.log("Log berhasil terkirim:", aktivitas, "| Pelanggaran:", count);
+      }).catch(err => {
+        console.warn("Koneksi log terhambat:", err);
       });
-      selectUjian.disabled = false;
-      ujianHelpText.classList.remove("d-none");
-
-      if (currentAvailableUjian.length === 1) {
-        selectUjian.value = "0";
-      }
     }
-  }
-
-  function extractTingkat(kelasStr) {
-    if (!kelasStr) return "";
-    const match = kelasStr.match(/\d+/);
-    return match ? match[0] : kelasStr.trim();
-  }
-
-  async function persiapkanMulaiUjian() {
-    const ruang = document.getElementById("selectRuang").value;
-    const kelas = document.getElementById("selectKelas").value;
-    const selectNama = document.getElementById("selectNama");
-    const nama = selectNama.value;
-    const nis = selectNama.selectedOptions[0]?.dataset.nis || "";
-    const selectUjian = document.getElementById("selectUjian");
-    const ujianIndex = selectUjian.value;
-    const btnSubmit = document.getElementById("btnSubmitMulai");
-
-    if (!ruang || !kelas || !nama) {
-      alert("Harap lengkapi identitas diri terlebih dahulu!");
-      return;
-    }
-
-    if (ujianIndex === "" || !currentAvailableUjian[ujianIndex]) {
-      alert("Silakan pilih mata pelajaran / ujian yang akan dikerjakan!");
-      return;
-    }
-
-    const ujianTerpilih = currentAvailableUjian[ujianIndex];
-
-    if (!ujianTerpilih.linkForm) {
-      alert("Tautan soal Google Form belum disetel di tab UJIAN. Hubungi pengawas.");
-      return;
-    }
-
-    // 1. Cek State Lokal Terlebih Dahulu
-    const localKey = `cbt_${nama}_${ujianTerpilih.mapel}`;
-    const localDone = localStorage.getItem(`${localKey}_done`) === "true";
-    const localV = parseInt(localStorage.getItem(`${localKey}_v`) || "0", 10);
-    const localLock = localStorage.getItem(`${localKey}_lock`) === "true";
-
-    if (localDone) {
-      alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini. Akses tidak dapat diulang.");
-      return;
-    }
-
-    btnSubmit.disabled = true;
-    const originalBtnText = btnSubmit.innerHTML;
-    btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Memeriksa status sesi...`;
-
-    let finalPelanggaran = localV;
-    let finalLock = localLock;
-    let isResumed = localV > 0 || localLock;
-
-    // 2. Cek Riwayat Server Google Sheets
-    try {
-      const checkUrl = `${SCRIPT_URL}?action=checkSession&nama=${encodeURIComponent(nama)}&mapel=${encodeURIComponent(ujianTerpilih.mapel)}`;
-      const res = await fetch(checkUrl);
-      const data = await res.json();
-
-      if (data.status === "success" && data.session) {
-        const s = data.session;
-
-        if (s.isCompleted) {
-          alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini dan jawaban telah dikirim.");
-          localStorage.setItem(`${localKey}_done`, "true");
-          btnSubmit.disabled = false;
-          btnSubmit.innerHTML = originalBtnText;
-          return;
-        }
-
-        if (s.hasSession) {
-          isResumed = true;
-          finalPelanggaran = Math.max(localV, s.totalPelanggaran);
-          finalLock = s.isLocked || localLock;
-        }
-      }
-    } catch (err) {
-      console.warn("Koneksi server terhambat, menggunakan data cache lokal:", err);
-    }
-
-    // 3. Simpan ke sessionStorage & localStorage
-    sessionStorage.setItem("exam_ruang", ruang);
-    sessionStorage.setItem("exam_kelas", kelas);
-    sessionStorage.setItem("exam_nama", nama);
-    sessionStorage.setItem("exam_nis", nis);
-    sessionStorage.setItem("exam_mapel", ujianTerpilih.mapel);
-    sessionStorage.setItem("exam_link_form", ujianTerpilih.linkForm);
-    sessionStorage.setItem("exam_token", configData.tokenUjian);
-    sessionStorage.setItem("exam_token_reset", configData.tokenResetPengawas);
-    sessionStorage.setItem("exam_max_violation", configData.batasPelanggaran);
-
-    sessionStorage.setItem("exam_pelanggaran", finalPelanggaran.toString());
-    sessionStorage.setItem("exam_is_locked", finalLock ? "true" : "false");
-    sessionStorage.setItem("exam_is_resumed", isResumed ? "true" : "false");
-    sessionStorage.setItem("exam_script_url", SCRIPT_URL);
-
-    localStorage.setItem(`${localKey}_v`, finalPelanggaran.toString());
-    localStorage.setItem(`${localKey}_lock`, finalLock ? "true" : "false");
-
-    window.location.href = "exam.html";
-  }
-</script>
-
+  </script>
 </body>
 </html>
