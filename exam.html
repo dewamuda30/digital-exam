@@ -318,6 +318,33 @@
     let isExitingLegally = false;
     let lastViolationTime = 0;
     let modalSelesaiInstance = null;
+    let wakeLock = null;
+
+    // ==========================================
+    // SISTEM SCREEN WAKE LOCK (ANTI LAYAR MATI)
+    // ==========================================
+    async function aktifkanWakeLock() {
+      if ('wakeLock' in navigator && typeof navigator.wakeLock.request === 'function') {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => {
+            wakeLock = null;
+          });
+          console.log("Screen Wake Lock aktif: Layar dicegah mati otomatis.");
+        } catch (err) {
+          console.warn("Screen Wake Lock dibatasi atau gagal aktif:", err);
+        }
+      }
+    }
+
+    function lepasWakeLock() {
+      if (wakeLock !== null) {
+        wakeLock.release().then(() => {
+          wakeLock = null;
+          console.log("Screen Wake Lock dilepas secara sah.");
+        }).catch(() => {});
+      }
+    }
 
     // DETEKSI AKSI TUTUP TAB / KELUAR PAKSA
     window.addEventListener("beforeunload", (e) => {
@@ -379,6 +406,9 @@
         document.getElementById("overlayInit").classList.add("d-none");
         sessionStorage.setItem("exam_started", "true");
 
+        // Aktifkan pengunci layar saat pertama kali masuk ujian
+        aktifkanWakeLock();
+
         if (isResumed) {
           kirimLog("Melanjutkan Ujian (Login Kembali Pasca Tutup Tab)", totalPelanggaran);
         } else {
@@ -401,8 +431,12 @@
 
     document.addEventListener("visibilitychange", () => {
       if (isUnloading || isExitingLegally) return;
+
       if (document.visibilityState === "hidden") {
         catatPelanggaran("Pindah Tab / Minimize Aplikasi");
+      } else if (document.visibilityState === "visible") {
+        // Sambung kembali Wake Lock saat siswa kembali fokus ke jendela browser
+        aktifkanWakeLock();
       }
     });
 
@@ -469,6 +503,9 @@
         jalankanFullscreen(() => {
           document.getElementById("overlayInterupsi").classList.add("d-none");
           document.getElementById("frameWrapper").style.visibility = "visible";
+          
+          // Sambung Wake Lock kembali
+          aktifkanWakeLock();
           kirimLog("Kembali Fullscreen (Token Valid)", totalPelanggaran);
         });
       } else {
@@ -510,6 +547,9 @@
         jalankanFullscreen(() => {
           document.getElementById("overlayBlokirTotal").classList.add("d-none");
           document.getElementById("frameWrapper").style.visibility = "visible";
+          
+          // Sambung Wake Lock kembali pasca reset guru
+          aktifkanWakeLock();
           kirimLog("Dibuka Kembali oleh Pengawas (Akses Dipulihkan)", totalPelanggaran);
         });
       } else {
@@ -542,6 +582,9 @@
 
         sessionStorage.setItem("exam_completed", "true");
         localStorage.setItem(`${localKey}_done`, "true");
+
+        // Lepas Screen Wake Lock saat ujian resmi selesai
+        lepasWakeLock();
 
         try {
           if (document.fullscreenElement || document.webkitFullscreenElement) {
