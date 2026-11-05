@@ -428,7 +428,7 @@
     return match ? match[0] : kelasStr.trim();
   }
 
-  async function persiapkanMulaiUjian() {
+async function persiapkanMulaiUjian() {
     const ruang = document.getElementById("selectRuang").value;
     const kelas = document.getElementById("selectKelas").value;
     const selectNama = document.getElementById("selectNama");
@@ -449,13 +449,13 @@
     }
 
     const ujianTerpilih = currentAvailableUjian[ujianIndex];
-
     if (!ujianTerpilih.linkForm) {
       alert("Tautan soal Google Form belum disetel di tab UJIAN. Hubungi pengawas.");
       return;
     }
 
     const localKey = `cbt_${nama}_${ujianTerpilih.mapel}`;
+    const localDone = localStorage.getItem(`${localKey}_done`) === "true";
 
     btnSubmit.disabled = true;
     const originalBtnText = btnSubmit.innerHTML;
@@ -466,25 +466,36 @@
     let isResumed = false;
 
     try {
-      // 1. PRIORITAS UTAMA: Tanyakan Status Langsung ke Server
+      // 1. Verifikasi Status Langsung ke Database Server
       const checkUrl = `${SCRIPT_URL}?action=checkSession&nama=${encodeURIComponent(nama)}&mapel=${encodeURIComponent(ujianTerpilih.mapel)}`;
       const res = await fetch(checkUrl);
       const data = await res.json();
 
+      // PROTEKSI 1: Deteksi Deployment Apps Script yang Belum Di-update
+      if (data.status === "success" && !data.session) {
+        console.warn("PERINGATAN: Endpoint checkSession belum aktif di Apps Script. Gunakan fallback lokal.");
+        if (localDone) {
+          alert("AKSES DITOLAK: Anda sudah tercatat menyelesaikan ujian ini.");
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = originalBtnText;
+          return;
+        }
+      }
+
+      // PROTEKSI 2: Deteksi Status Selesai dari Server
       if (data.status === "success" && data.session) {
         const s = data.session;
 
-        // JIKA DI SERVER MASIH TERCATAT SELESAI
-        if (s.isCompleted) {
+        // JIKA DI LOG SPREADSHEET STATUSNYA SUDAH SELESAI -> BLOKIR MUTLAK
+        if (s.isCompleted === true) {
           localStorage.setItem(`${localKey}_done`, "true");
-          alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini dan jawaban telah dikirim.");
+          alert(`AKSES DITOLAK: Siswa a.n. ${nama} sudah menyelesaikan ujian ${ujianTerpilih.mapel} dan jawaban telah terkirim.`);
           btnSubmit.disabled = false;
           btnSubmit.innerHTML = originalBtnText;
           return;
         }
 
-        // JIKA DI SERVER SUDAH DIHAPUS / BELUM SELESAI RESMI OLEH GURU
-        // Bersihkan tanda blokir lokal agar siswa bisa masuk kembali
+        // JIKA DI LOG BELUM SELESAI (Misal: log selesai dihapus guru untuk ujian ulang)
         localStorage.removeItem(`${localKey}_done`);
 
         if (s.hasSession) {
@@ -494,23 +505,20 @@
         }
       }
     } catch (err) {
-      console.warn("Koneksi server gagal, menggunakan pengecekan cadangan lokal:", err);
-      
-      // 2. FALLBACK: Hanya gunakan localStorage jika koneksi server benar-benar terputus/offline
-      const localDone = localStorage.getItem(`${localKey}_done`) === "true";
+      console.warn("Koneksi verifikasi server terhambat:", err);
+      // Fallback jika offline murni
       if (localDone) {
-        alert("Ujian ini sudah diselesaikan sebelumnya (Mode Offline).");
+        alert("AKSES DITOLAK: Anda sudah menyelesaikan ujian ini sebelumnya (Status Offline).");
         btnSubmit.disabled = false;
         btnSubmit.innerHTML = originalBtnText;
         return;
       }
-
       finalPelanggaran = parseInt(localStorage.getItem(`${localKey}_v`) || "0", 10);
       finalLock = localStorage.getItem(`${localKey}_lock`) === "true";
       isResumed = finalPelanggaran > 0 || finalLock;
     }
 
-    // 3. Simpan Sesi yang Diizinkan Masuk
+    // 2. Simpan Sesi & Masuk Ujian
     sessionStorage.setItem("exam_ruang", ruang);
     sessionStorage.setItem("exam_kelas", kelas);
     sessionStorage.setItem("exam_nama", nama);
