@@ -5,19 +5,29 @@
  * ===================================================================
  */
 
-// 1. ENDPOINT GET: Membaca Config, Ujian Aktif, dan Data Siswa
-// GANTI FUNGSI doGet DENGAN INI:
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    // 1. ENDPOINT KHUSUS MONITORING RUANG (Dipanggil otomatis oleh monitor.html)
+    // 1. ENDPOINT CHECK SESI SISWA (Pemulihan Sesi Pasca Tutup Browser)
+    if (e && e.parameter && e.parameter.action === "checkSession") {
+      var config = readConfigSheet(ss);
+      var nama = (e.parameter.nama || "").trim();
+      var mapel = (e.parameter.mapel || "").trim();
+      var sessionInfo = getStudentLatestSession(ss, nama, mapel, config.batasPelanggaran);
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        session: sessionInfo
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // 2. ENDPOINT MONITORING RUANG (Khusus monitor.html)
     if (e && e.parameter && e.parameter.action === "getMonitoring") {
       var config = readConfigSheet(ss);
       var inputToken = (e.parameter.token || "").trim().toUpperCase();
       var inputRuang = (e.parameter.ruang || "").trim();
 
-      // Validasi Sandi Pengawas
       if (!config.tokenResetPengawas || inputToken !== config.tokenResetPengawas.toUpperCase()) {
         return ContentService.createTextOutput(JSON.stringify({
           status: "error",
@@ -35,7 +45,7 @@ function doGet(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 2. ENDPOINT DEFAULT (Dipanggil oleh index.html)
+    // 3. ENDPOINT DEFAULT (Config, Ujian Aktif, Siswa)
     var config = readConfigSheet(ss);
     var ujianAktif = readActiveExams(ss);
     var siswa = readSiswaSheet(ss);
@@ -59,19 +69,93 @@ function doGet(e) {
   }
 }
 
-// TAMBAHKAN FUNGSI INI DI PALING BAWAH Code.gs:
+// Menelusuri status dan pelanggaran tertinggi dari tab LOG
+// GANTI FUNGSI getStudentLatestSession DI Code.gs DENGAN INI:
+function getStudentLatestSession(ss, targetNama, targetMapel, batasPelanggaran) {
+  var logSheet = ss.getSheetByName("LOG") || ss.getSheetByName("Log") || ss.getSheetByName("log");
+  var info = {
+    hasSession: false,
+    isCompleted: false,
+    isLocked: false,
+    totalPelanggaran: 0,
+    lastAktivitas: ""
+  };
+
+  if (!logSheet || logSheet.getLastRow() <= 1) return info;
+
+  var data = logSheet.getDataRange().getValues();
+  if (data.length <= 1) return info;
+
+  // Baca Header Baris ke-1 secara dinamis
+  var headers = data[0].map(function(h) { return h ? h.toString().trim().toLowerCase() : ""; });
+  var idxMapel = headers.indexOf("mapel");
+  var idxNama = headers.indexOf("nama siswa") !== -1 ? headers.indexOf("nama siswa") : headers.indexOf("nama");
+  var idxAktivitas = headers.indexOf("aktivitas");
+  var idxPelanggaran = headers.indexOf("pelanggaran ke") !== -1 ? headers.indexOf("pelanggaran ke") : headers.indexOf("pelanggaran");
+
+  // Fallback jika nama kolom berbeda
+  if (idxMapel === -1) idxMapel = 1;
+  if (idxNama === -1) idxNama = 4;
+  if (idxAktivitas === -1) idxAktivitas = 5;
+  if (idxPelanggaran === -1) idxPelanggaran = 6;
+
+  var maxV = 0;
+  var foundLockAction = false;
+  var foundAny = false;
+
+  var cleanTargetNama = (targetNama || "").toString().trim().toLowerCase();
+  var cleanTargetMapel = (targetMapel || "").toString().trim().toLowerCase();
+
+  for (var i = data.length - 1; i >= 1; i--) {
+    var rowMapel = data[i][idxMapel] ? data[i][idxMapel].toString().trim().toLowerCase() : "";
+    var rowNama = data[i][idxNama] ? data[i][idxNama].toString().trim().toLowerCase() : "";
+    var rawAktivitas = data[i][idxAktivitas] ? data[i][idxAktivitas].toString().trim() : "";
+    var rowAktivitas = rawAktivitas.toLowerCase();
+    var rowPelanggaran = parseInt(data[i][idxPelanggaran] || 0, 10);
+
+    if (rowNama === cleanTargetNama && rowMapel === cleanTargetMapel) {
+      if (!foundAny) {
+        foundAny = true;
+        info.hasSession = true;
+        info.lastAktivitas = rawAktivitas;
+      }
+
+      if (rowPelanggaran > maxV) {
+        maxV = rowPelanggaran;
+      }
+
+      // Deteksi Selesai Fleksibel: Mengandung kata "selesai" di riwayat mana pun
+      if (rowAktivitas.indexOf("selesai") !== -1) {
+        info.isCompleted = true;
+      }
+
+      if (!foundLockAction) {
+        if (rowAktivitas.indexOf("terkunci") !== -1) {
+          info.isLocked = true;
+          foundLockAction = true;
+        } else if (rowAktivitas.indexOf("dibuka kembali") !== -1 || rowAktivitas.indexOf("dipulihkan") !== -1) {
+          info.isLocked = false;
+          foundLockAction = true;
+        }
+      }
+    }
+  }
+
+  info.totalPelanggaran = maxV;
+  if (!foundLockAction && maxV >= batasPelanggaran) {
+    info.isLocked = true;
+  }
+
+  return info;
+}
+
 function getRoomMonitoringData(ss, targetRuang) {
   var siswaSheet = ss.getSheetByName("SISWA");
   var logSheet = ss.getSheetByName("LOG") || ss.getSheetByName("Log") || ss.getSheetByName("log");
   
-  var result = {
-    peserta: [],
-    liveFeed: []
-  };
-
+  var result = { peserta: [], liveFeed: [] };
   if (!siswaSheet) return result;
 
-  // 1. Ambil daftar siswa di ruang target
   var siswaData = siswaSheet.getDataRange().getValues();
   var listSiswaRuang = [];
   for (var i = 1; i < siswaData.length; i++) {
@@ -85,12 +169,10 @@ function getRoomMonitoringData(ss, targetRuang) {
     }
   }
 
-  // 2. Baca seluruh data riwayat tab LOG
   var logMap = {};
   var feed = [];
   if (logSheet && logSheet.getLastRow() > 1) {
     var logRows = logSheet.getDataRange().getValues();
-    // Iterasi dari log terbaru ke terlama
     for (var j = logRows.length - 1; j >= 1; j--) {
       var rowRuang = logRows[j][2] ? logRows[j][2].toString().trim() : "";
       if (rowRuang.toLowerCase() === targetRuang.toLowerCase()) {
@@ -99,16 +181,10 @@ function getRoomMonitoringData(ss, targetRuang) {
         var count = parseInt(logRows[j][6] || 0, 10);
         var waktu = logRows[j][0] ? logRows[j][0].toString() : "";
 
-        // Catat aktivitas terbaru per siswa
         if (!logMap[namaSiswa]) {
-          logMap[namaSiswa] = {
-            aktivitasTerakhir: aktivitas,
-            pelanggaran: count,
-            waktu: waktu
-          };
+          logMap[namaSiswa] = { aktivitasTerakhir: aktivitas, pelanggaran: count, waktu: waktu };
         }
 
-        // Ambil 8 riwayat aktivitas terakhir untuk ticker pengawas
         if (feed.length < 8) {
           feed.push({
             waktu: waktu.split(" ")[1] || waktu,
@@ -122,7 +198,6 @@ function getRoomMonitoringData(ss, targetRuang) {
     }
   }
 
-  // 3. Gabungkan status peserta
   listSiswaRuang.forEach(function(s) {
     var logInfo = logMap[s.nama];
     var status = "Belum Masuk";
@@ -154,42 +229,27 @@ function getRoomMonitoringData(ss, targetRuang) {
   return result;
 }
 
-// 2. ENDPOINT POST: Menerima & Mencatat Riwayat Pelanggaran (Dengan Lock Service)
 function doPost(e) {
   var lock = LockService.getScriptLock();
   try {
-    // Menunggu antrean maksimal 10 detik jika banyak siswa submit sekaligus
     lock.waitLock(10000);
   } catch (lockErr) {
     return ContentService.createTextOutput(JSON.stringify({
       status: "error",
-      message: "Server sibuk mencatat data lain"
+      message: "Server sibuk"
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // Cari tab LOG (kebal huruf besar/kecil atau spasi)
     var logSheet = ss.getSheetByName("LOG") || ss.getSheetByName("Log") || ss.getSheetByName("log");
     
-    // Buat otomatis jika tab LOG belum ada
     if (!logSheet) {
       logSheet = ss.insertSheet("LOG");
-      logSheet.appendRow([
-        "Waktu", 
-        "Mapel", 
-        "Ruang", 
-        "Kelas", 
-        "Nama Siswa", 
-        "Aktivitas", 
-        "Pelanggaran Ke"
-      ]);
+      logSheet.appendRow(["Waktu", "Mapel", "Ruang", "Kelas", "Nama Siswa", "Aktivitas", "Pelanggaran Ke"]);
     }
 
     var payload = {};
-
-    // Ekstraksi payload dari fetch web
     if (e && e.postData && e.postData.contents) {
       try {
         payload = JSON.parse(e.postData.contents);
@@ -200,14 +260,8 @@ function doPost(e) {
       payload = e.parameter;
     }
 
-    // Format stempel waktu lokal Indonesia (WIB)
-    var waktuSekarang = Utilities.formatDate(
-      new Date(), 
-      "Asia/Jakarta", 
-      "dd/MM/yyyy HH:mm:ss"
-    );
+    var waktuSekarang = Utilities.formatDate(new Date(), "Asia/Jakarta", "dd/MM/yyyy HH:mm:ss");
 
-    // Tulis baris baru ke tab LOG
     logSheet.appendRow([
       waktuSekarang,
       payload.mapel || "-",
@@ -233,11 +287,6 @@ function doPost(e) {
   }
 }
 
-// ===================================================================
-// FUNGSI PEMBANTU (HELPER FUNCTIONS)
-// ===================================================================
-
-// Membaca tab CONFIG
 function readConfigSheet(ss) {
   var sheet = ss.getSheetByName("CONFIG");
   var config = {
@@ -287,7 +336,6 @@ function readConfigSheet(ss) {
   return config;
 }
 
-// Membaca tab UJIAN (hanya mengambil baris dengan is_active = TRUE)
 function readActiveExams(ss) {
   var sheet = ss.getSheetByName("UJIAN");
   var activeExams = [];
@@ -297,16 +345,11 @@ function readActiveExams(ss) {
   if (data.length <= 1) return activeExams;
 
   var headers = data[0].map(function(h) { return h.toString().trim().toLowerCase(); });
-  var idxMapel = headers.indexOf("mapel");
-  var idxTingkat = headers.indexOf("tingkat kelas");
-  var idxLink = headers.indexOf("link form");
-  var idxActive = headers.indexOf("is_active");
+  var idxMapel = headers.indexOf("mapel") !== -1 ? headers.indexOf("mapel") : 0;
+  var idxTingkat = headers.indexOf("tingkat kelas") !== -1 ? headers.indexOf("tingkat kelas") : 1;
+  var idxLink = headers.indexOf("link form") !== -1 ? headers.indexOf("link form") : 2;
+  var idxActive = headers.indexOf("is_active") !== -1 ? headers.indexOf("is_active") : 3;
   var idxKet = headers.indexOf("keterangan");
-
-  if (idxMapel === -1) idxMapel = 0;
-  if (idxTingkat === -1) idxTingkat = 1;
-  if (idxLink === -1) idxLink = 2;
-  if (idxActive === -1) idxActive = 3;
 
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
@@ -325,7 +368,6 @@ function readActiveExams(ss) {
   return activeExams;
 }
 
-// Membaca tab SISWA (Master Peserta)
 function readSiswaSheet(ss) {
   var sheet = ss.getSheetByName("SISWA");
   var listSiswa = [];
@@ -335,15 +377,10 @@ function readSiswaSheet(ss) {
   if (data.length <= 1) return listSiswa;
 
   var headers = data[0].map(function(h) { return h.toString().trim().toLowerCase(); });
-  var idxRuang = headers.indexOf("ruang");
-  var idxKelas = headers.indexOf("kelas");
-  var idxNis = headers.indexOf("nis");
-  var idxNama = headers.indexOf("nama siswa") !== -1 ? headers.indexOf("nama siswa") : headers.indexOf("nama");
-
-  if (idxRuang === -1) idxRuang = 0;
-  if (idxKelas === -1) idxKelas = 1;
-  if (idxNis === -1) idxNis = 2;
-  if (idxNama === -1) idxNama = 3;
+  var idxRuang = headers.indexOf("ruang") !== -1 ? headers.indexOf("ruang") : 0;
+  var idxKelas = headers.indexOf("kelas") !== -1 ? headers.indexOf("kelas") : 1;
+  var idxNis = headers.indexOf("nis") !== -1 ? headers.indexOf("nis") : 2;
+  var idxNama = headers.indexOf("nama siswa") !== -1 ? headers.indexOf("nama siswa") : (headers.indexOf("nama") !== -1 ? headers.indexOf("nama") : 3);
 
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
@@ -360,15 +397,11 @@ function readSiswaSheet(ss) {
   return listSiswa;
 }
 
-// Konversi link share Google Drive biasa menjadi Direct Image Link
 function formatDriveImageUrl(driveUrl) {
   if (!driveUrl) return "";
-  
   var match = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || driveUrl.match(/id=([a-zA-Z0-9_-]+)/);
   if (match && match[1]) {
-    var fileId = match[1];
-    return "https://lh3.googleusercontent.com/d/" + fileId;
+    return "https://lh3.googleusercontent.com/d/" + match[1];
   }
-  
   return driveUrl;
 }
