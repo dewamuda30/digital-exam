@@ -455,27 +455,18 @@
       return;
     }
 
-    // 1. Cek State Lokal Terlebih Dahulu
     const localKey = `cbt_${nama}_${ujianTerpilih.mapel}`;
-    const localDone = localStorage.getItem(`${localKey}_done`) === "true";
-    const localV = parseInt(localStorage.getItem(`${localKey}_v`) || "0", 10);
-    const localLock = localStorage.getItem(`${localKey}_lock`) === "true";
-
-    if (localDone) {
-      alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini. Akses tidak dapat diulang.");
-      return;
-    }
 
     btnSubmit.disabled = true;
     const originalBtnText = btnSubmit.innerHTML;
-    btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Memeriksa status sesi...`;
+    btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Memverifikasi sesi ke server...`;
 
-    let finalPelanggaran = localV;
-    let finalLock = localLock;
-    let isResumed = localV > 0 || localLock;
+    let finalPelanggaran = 0;
+    let finalLock = false;
+    let isResumed = false;
 
-    // 2. Cek Riwayat Server Google Sheets
     try {
+      // 1. PRIORITAS UTAMA: Tanyakan Status Langsung ke Server
       const checkUrl = `${SCRIPT_URL}?action=checkSession&nama=${encodeURIComponent(nama)}&mapel=${encodeURIComponent(ujianTerpilih.mapel)}`;
       const res = await fetch(checkUrl);
       const data = await res.json();
@@ -483,25 +474,43 @@
       if (data.status === "success" && data.session) {
         const s = data.session;
 
+        // JIKA DI SERVER MASIH TERCATAT SELESAI
         if (s.isCompleted) {
-          alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini dan jawaban telah dikirim.");
           localStorage.setItem(`${localKey}_done`, "true");
+          alert("Anda sudah menyelesaikan ujian untuk mata pelajaran ini dan jawaban telah dikirim.");
           btnSubmit.disabled = false;
           btnSubmit.innerHTML = originalBtnText;
           return;
         }
 
+        // JIKA DI SERVER SUDAH DIHAPUS / BELUM SELESAI RESMI OLEH GURU
+        // Bersihkan tanda blokir lokal agar siswa bisa masuk kembali
+        localStorage.removeItem(`${localKey}_done`);
+
         if (s.hasSession) {
           isResumed = true;
-          finalPelanggaran = Math.max(localV, s.totalPelanggaran);
-          finalLock = s.isLocked || localLock;
+          finalPelanggaran = s.totalPelanggaran;
+          finalLock = s.isLocked;
         }
       }
     } catch (err) {
-      console.warn("Koneksi server terhambat, menggunakan data cache lokal:", err);
+      console.warn("Koneksi server gagal, menggunakan pengecekan cadangan lokal:", err);
+      
+      // 2. FALLBACK: Hanya gunakan localStorage jika koneksi server benar-benar terputus/offline
+      const localDone = localStorage.getItem(`${localKey}_done`) === "true";
+      if (localDone) {
+        alert("Ujian ini sudah diselesaikan sebelumnya (Mode Offline).");
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalBtnText;
+        return;
+      }
+
+      finalPelanggaran = parseInt(localStorage.getItem(`${localKey}_v`) || "0", 10);
+      finalLock = localStorage.getItem(`${localKey}_lock`) === "true";
+      isResumed = finalPelanggaran > 0 || finalLock;
     }
 
-    // 3. Simpan ke sessionStorage & localStorage
+    // 3. Simpan Sesi yang Diizinkan Masuk
     sessionStorage.setItem("exam_ruang", ruang);
     sessionStorage.setItem("exam_kelas", kelas);
     sessionStorage.setItem("exam_nama", nama);
